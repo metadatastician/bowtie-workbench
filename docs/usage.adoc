@@ -1,0 +1,4 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= Usage
+
+Run `just run`; open http://127.0.0.1:8080. Create an assessment, describe the hazard and top event, add threats and consequences, link preventive and recovery controls, record evidence and appetite, then review the decision and learning actions. Export JSON before changing browser origins or clearing site data. Imported files are validated before adoption.

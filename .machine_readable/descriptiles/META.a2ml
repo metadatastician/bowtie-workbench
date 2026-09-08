@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: MPL-2.0
+[metadata]
+project = "bowtie-workbench"
+version = "0.1.0"
+last-updated = "2026-09-08"
+
+[project-info]
+type = "website"
+languages = ["AffineScript", "JavaScript", "HTML", "CSS"]
+license = "MPL-2.0"
+author = "Jonathan D.A. Jewell"
+[architecture-decisions]
+accepted = ["Preserve original prototype", "Pure AffineScript domain core with Bun/WebAssembly host", "System ET owns theory; AnyType owns graded kernel", "Unknown evidence remains unknown; ordinal bands are not probabilities"]
+[development-practices]
+build-tool = "just"
+runtime = "bun"
+ci-platform = "github-actions"

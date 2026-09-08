@@ -4,13 +4,13 @@
 :date: 2026-04-15
 
 Date: 2026-04-15 +
-Repository: `/var/mnt/eclipse/repos/rsr-template-repo`
+Repository: `/var/mnt/eclipse/repos/bowtie-workbench`
 
 == Audit Criteria
 
 * *Dangerous Patterns*: *CLEAN*.
 * *Standards Check*:
-** `machine-readable/*.a2ml`: `0-AI-MANIFEST.a2ml` present.
+** `.machine_readable/*.a2ml`: `0-AI-MANIFEST.a2ml` present.
 ** `Justfile`: *PRESENT*.
 ** `K9.k9` / `coordination.k9`: *PRESENT* (`coordination.k9`).
 * *CI/CD Status*: `.github/workflows` and `.gitlab-ci.yml` *PRESENT*.

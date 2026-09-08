@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
 // Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 // Template: QUICKSTART-DEV.adoc — clone → build → test → PR
-// Replace rsr-template-repo, {{BUILD_CMD}}, {{TEST_CMD}}, {{LANG_STACK}} with actuals
-= rsr-template-repo — Quick Start for Developers
+// Replace bowtie-workbench, UNASSIGNED, UNASSIGNED, UNASSIGNED with actuals
+= bowtie-workbench — Quick Start for Developers
 :toc:
 :toclevels: 2
 
 == Tech Stack
 
-{{LANG_STACK}}
+UNASSIGNED
 
 == Set Up Development Environment
 
@@ -23,8 +23,8 @@ guix shell
 
 [source,bash]
 ----
-git clone https://github.com/hyperpolymath/rsr-template-repo.git
-cd rsr-template-repo
+git clone https://github.com/metadatastician/bowtie-workbench.git
+cd bowtie-workbench
 just setup-dev
 ----
 
@@ -32,27 +32,27 @@ just setup-dev
 
 [source,bash]
 ----
-{{BUILD_CMD}}
+UNASSIGNED
 ----
 
 == Test
 
 [source,bash]
 ----
-{{TEST_CMD}}
+UNASSIGNED
 ----
 
 == Project Structure
 
 [source]
 ----
-rsr-template-repo/
+bowtie-workbench/
 ├── src/                  # Source code
 ├── src/interface/Abi/              # Idris2 ABI definitions (if applicable)
 ├── ffi/zig/              # Zig FFI bridge (if applicable)
 ├── tests/                # Test suite
 ├── docs/                 # Documentation
-├── machine-readable/    # Checkpoint files (STATE, META, ECOSYSTEM)
+├── .machine_readable/    # Checkpoint files (STATE, META, ECOSYSTEM)
 ├── Justfile              # Task runner recipes
 ├── guix.scm              # Guix environment
 └── 0-AI-MANIFEST.a2ml    # AI agent entry point
@@ -81,10 +81,10 @@ just panic-scan     # No new security issues
 
 == Contractile Invariants
 
-Read `machine-readable/MUST.contractile` before making changes.
+Read `.machine_readable/MUST.contractile` before making changes.
 Key invariants that must never be violated:
 
-{{MUST_INVARIANTS}}
+UNASSIGNED
 
 == LLM/AI Agent Development
 
@@ -100,5 +100,5 @@ Or read `0-AI-MANIFEST.a2ml` and `.claude/CLAUDE.md` directly.
 == Get Help
 
 * **Architecture**: link:EXPLAINME.adoc[EXPLAINME.adoc]
-* **Wiki**: https://github.com/hyperpolymath/rsr-template-repo/wiki
+* **Wiki**: https://github.com/metadatastician/bowtie-workbench/wiki
 * **Report issue**: `just help-me`

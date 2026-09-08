@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MPL-2.0
+[metadata]
+project = "bowtie-workbench"
+version = "0.1.0"
+last-updated = "2026-09-08"
+
+[semantics]
+authority = "docs/architecture.adoc"
+invariants = ["Unknown is not safe", "Band arithmetic is not probabilistic inference", "A diagram edge is a claim requiring evidence", "No learning closure without verification and reopening criteria", "No automatic approval from a policy comparison"]
+[proof-obligations]
+status = "specified; application proofs not yet mechanised"
+items = ["Evidence weakening cannot strengthen assurance", "Expired evidence cannot approve a critical barrier", "Imports preserve stable references and revisions", "Affine transition authority cannot be duplicated; evidence itself remains reusable"]

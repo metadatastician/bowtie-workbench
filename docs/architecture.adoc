@@ -1,0 +1,63 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= Architecture
+:toc:
+
+== Current executable boundary
+
+`src/prototype/index.html` is the unchanged supplied browser application. It has
+its own pure JavaScript domain functions, IndexedDB storage and UI in one file.
+`scripts/serve.mjs` serves only that file on loopback. It supplies no `/api/state`
+service; the HTML's optional LMDB branch is not configured or implemented here.
+
+`src/core/policy.affine` is the first extracted domain-policy candidate. The real
+AffineScript compiler produces WebAssembly, and Bun tests instantiate and call
+the exports. The compiler currently includes a WASI `fd_write` import even for
+this pure module; tests bind it to a throwing function so accidental I/O fails.
+The JavaScript UI does not yet call this module. Full parity and browser wiring
+are a separate milestone; the candidate's inputs are deliberately narrower.
+
+== Target separation
+
+. Domain: validated values, evidence graph, controls, decisions and learning.
+. Application: commands, transitions, projections and explicit authority.
+. Ports: clock, storage, import/export, identity and evidence retrieval.
+. Adapters: browser IndexedDB first; other stores require a separate decision.
+. Views: bowtie first; organisational/AcciMap, control/STPA, functional/FRAM and
+  decision views share stable evidence references while retaining method semantics.
+
+Use AffineScript for domain and application logic; Bun supports builds and tests.
+Keep browser JS at the host boundary until the upstream DOM/TEA support has been
+qualified. No new Deno dependency is introduced. No private package registry or
+speculative package names are added as working dependencies.
+
+== Model to evolve
+
+[cols="1,3",options="header"]
+|===
+| Entity | Required distinctions
+| Work system | Goals, actors, tasks, resources, boundaries, pressures and horizon
+| Hazard / top event | Source of potential harm versus loss of control
+| Threat / consequence | Initiating mechanism versus concrete outcomes and groups affected
+| Control / escalation | Prevention or recovery, failure/degradation factors and protection
+| Evidence / claim | Observation, source, interpretation, uncertainty, disagreement and expiry
+| Decision | Alternatives, constraints, authority, rationale, conditions and review trigger
+| Learning | Signal, hypothesis, action, owner, verification, sharing and reopening
+| Graph link | Contributes, required, inhibits, shared dependency or timed feedback
+|===
+
+Keep stable IDs and revision numbers at every persistence boundary. Imports need
+schema validation and referential checks before adoption, with explicit migration
+for future versions. A graph link does not prove causation. A control label does
+not establish effectiveness. Unknown values do not default to zero risk.
+Opportunity benefits must not silently cancel unacceptable harms or obligations.
+
+== First port acceptance scenario
+
+Use the original interface as the comparison oracle for supported policy inputs.
+Check every severity/likelihood/ceiling band, missing evidence, breached duties,
+critical-control degradation and expired verification. Record any intentional
+semantic change as an ADR, with a migration and UI explanation. Only then replace
+the browser rule and remove the duplicated JavaScript implementation.
+
+Research direction: link:research/central-question.adoc[central question].
+Library qualification: link:research/library-roadmap.adoc[library roadmap].

@@ -2,7 +2,7 @@
 SPDX-License-Identifier: CC-BY-SA-4.0
 Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 -->
-<!-- Copyright (c) {{CURRENT_YEAR}} {{AUTHOR}} ({{OWNER}}) <{{AUTHOR_EMAIL}}> -->
+<!-- Copyright (c) 2026 Jonathan D.A. Jewell (metadatastician) <j.d.a.jewell@open.ac.uk> -->
 <!-- Authoritative source: docs/practice/AI-CONVENTIONS.adoc -->
 
 # Copilot Instructions
@@ -10,13 +10,13 @@ Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 ## Before Writing Code
 
 - Read `0-AI-MANIFEST.a2ml` in the repo root for canonical file locations.
-- State files (.a2ml) live in `machine-readable/` ONLY, never the root.
+- State files (.a2ml) live in `.machine_readable/` ONLY, never the root.
 
 ## License
 
 - SPDX: `MPL-2.0` on all new files.
 - Never use AGPL-3.0.
-- Copyright: `{{AUTHOR}} ({{OWNER}}) <{{AUTHOR_EMAIL}}>`
+- Copyright: `Jonathan D.A. Jewell (metadatastician) <j.d.a.jewell@open.ac.uk>`
 
 ## Code Style
 
@@ -82,4 +82,4 @@ migration destination is AffineScript.
 
 Never create these in the repo root:
 STATE.a2ml, META.a2ml, ECOSYSTEM.a2ml, AGENTIC.a2ml, NEUROSYM.a2ml, PLAYBOOK.a2ml.
-They belong in `machine-readable/` only.
+They belong in `.machine_readable/` only.

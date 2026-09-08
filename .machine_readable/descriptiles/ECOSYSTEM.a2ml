@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: MPL-2.0
+[metadata]
+project = "bowtie-workbench"
+version = "0.1.0"
+last-updated = "2026-09-08"
+
+[position]
+type = "application"
+purpose = "Evidence-linked sociotechnical risk and opportunity workbench"
+what-this-is-not = ["a type-theory repository", "a kernel implementation", "a certified safety assessment", "an Anytype note-taking integration"]
+[pipeline]
+chain = "systemet -> anytype -> affinescript -> bowtie-workbench"
+coordination = "metadatastician/bowtie-workbench"
+[related-projects]
+projects = [
+ { name = "hyperpolymath/affinescript", relationship = "implementation-language" },
+ { name = "hyperpolymath/anytype", relationship = "graded-kernel-reference" },
+ { name = "hyperpolymath/systemet", relationship = "semantic-authority" },
+ { name = "hyperpolymath/rsr-template-repo", relationship = "scaffold-parent" }
+]

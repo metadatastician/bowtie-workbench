@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MPL-2.0
+[metadata]
+project = "bowtie-workbench"
+version = "0.1.0"
+last-updated = "2026-09-08"
+
+[commands]
+build = "just build"
+test = "just test"
+validate = "just validate-rsr"
+run = "just run"
+[release]
+require = ["Core tests", "Prototype integrity tests", "RSR shape and placeholder checks", "Honest readiness update"]

@@ -4,13 +4,13 @@ Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 -->
 # Project Governance
 
-This document describes the governance model for **{{PROJECT_NAME}}**.
+This document describes the governance model for **Bowtie Workbench**.
 
 ---
 
 ## Project Governance Model
 
-{{PROJECT_NAME}} follows a **Benevolent Dictator For Life (BDFL)** governance model.
+Bowtie Workbench follows a **Benevolent Dictator For Life (BDFL)** governance model.
 This model is well-suited for solo maintainers and small project teams where rapid,
 consistent decision-making is more valuable than formal consensus processes.
 
@@ -46,7 +46,7 @@ release schedules, contributor access, and community standards.
 - ADR statuses: `proposed`, `accepted`, `deprecated`, `superseded`, `rejected`.
 - ADRs provide a historical record of why decisions were made and what alternatives
   were considered.
-- See `machine-readable/descriptiles/META.a2ml` for the machine-readable ADR index.
+- See `.machine_readable/descriptiles/META.a2ml` for the machine-readable ADR index.
 
 ---
 
@@ -81,7 +81,7 @@ release schedules, contributor access, and community standards.
   standards enforcement.
 - Bot actions are subject to the same quality and review standards as human
   contributions.
-- Configure your bots in `machine-readable/bot_directives/`.
+- Configure your bots in `.machine_readable/bot_directives/`.
 
 ---
 
@@ -157,4 +157,4 @@ with the community before adoption, even though the BDFL retains final authority
 
 ---
 
-<sub>Copyright (c) {{CURRENT_YEAR}} {{OWNER}}. Licensed under MPL-2.0.</sub>
+<sub>Copyright (c) 2026 metadatastician. Licensed under MPL-2.0.</sub>

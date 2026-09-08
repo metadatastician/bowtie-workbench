@@ -1,0 +1,24 @@
+// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+// Initial policy kernel. Ordinal bands are compared, never multiplied.
+// Outcomes: 0 = review/unknown; 1 = within declared appetite; 2 = stop.
+// A result is decision support, never approval or a probability estimate.
+// Host boundary: likelihood/severity 1..5, ceiling 0..5, unknown = -1.
+pub fn appetite_gate(likelihood: Int, severity: Int, ceiling: Int,
+                     breach: Bool, evidence_ready: Bool,
+                     critical_controls_ready: Bool) -> Int {
+  if breach { 2 }
+  else if likelihood < 1 || likelihood > 5 { 0 }
+  else if severity < 1 || severity > 5 { 0 }
+  else if ceiling < 0 || ceiling > 5 { 0 }
+  else if ceiling == 0 || likelihood > ceiling { 2 }
+  else if !evidence_ready || !critical_controls_ready { 0 }
+  else { 1 }
+}
+
+// Evidence may be retained and quoted repeatedly. Only a transition capability
+// should eventually be affine; this Boolean gate does not implement that proof.
+pub fn learning_closure_ready(owner: Bool, action: Bool, check: Bool,
+                             result: Bool, shared: Bool, reopen: Bool) -> Bool {
+  owner && action && check && result && shared && reopen
+}

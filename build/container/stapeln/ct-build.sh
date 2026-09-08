@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: MPL-2.0
 #
-# {{PROJECT_NAME}} — Cerro Torre build, sign, and verify pipeline
+# Bowtie Workbench — Cerro Torre build, sign, and verify pipeline
 #
 # Builds the container image, packages it as a verified .ctp bundle,
 # signs it with Ed25519, and verifies the result. Gracefully degrades
@@ -18,8 +18,8 @@
 #   CT_KEY_ID=my-key ./ct-build.sh # Use specific signing key
 #
 # Environment variables:
-#   CT_KEY_ID       — Signing key identifier (default: {{SERVICE_NAME}}-release)
-#   CT_REGISTRY     — OCI registry to push to (default: {{REGISTRY}})
+#   CT_KEY_ID       — Signing key identifier (default: bowtie-workbench-release)
+#   CT_REGISTRY     — OCI registry to push to (default: ghcr.io/metadatastician)
 #   CT_TAG          — Image tag (default: latest)
 
 set -euo pipefail
@@ -44,15 +44,15 @@ for arg in "$@"; do
     fi
 done
 
-CT_KEY_ID="${CT_KEY_ID:-{{SERVICE_NAME}}-release}"
-CT_REGISTRY="${CT_REGISTRY:-{{REGISTRY}}}"
+CT_KEY_ID="${CT_KEY_ID:-bowtie-workbench-release}"
+CT_REGISTRY="${CT_REGISTRY:-ghcr.io/metadatastician}"
 CT_TAG="${CT_TAG:-latest}"
 
-IMAGE_NAME="{{SERVICE_NAME}}"
+IMAGE_NAME="bowtie-workbench"
 FULL_IMAGE="${CT_REGISTRY}/${IMAGE_NAME}:${CT_TAG}"
 CTP_FILE="${SCRIPT_DIR}/${IMAGE_NAME}-${CT_TAG}.ctp"
 
-echo "=== {{PROJECT_NAME}} Cerro Torre Build Pipeline ==="
+echo "=== Bowtie Workbench Cerro Torre Build Pipeline ==="
 echo "  Image:  ${FULL_IMAGE}"
 echo "  Key:    ${CT_KEY_ID}"
 echo "  Bundle: ${CTP_FILE}"

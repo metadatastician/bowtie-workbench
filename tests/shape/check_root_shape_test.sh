@@ -18,10 +18,10 @@ git -C "$FIXTURE" config user.name "RSR fixture"
 git -C "$FIXTURE" config user.email "fixture@example.invalid"
 
 mkdir -p "$FIXTURE/machine-readable"
-cat > "$FIXTURE/machine-readable/root-allow.txt" <<'ALLOW'
+cat > "$FIXTURE/.machine_readable/root-allow.txt" <<'ALLOW'
 # fixture allowlist
 .git/
-machine-readable/
+.machine_readable/
 README.adoc
 ?OPTIONAL-THING.adoc
 ALLOW
@@ -42,12 +42,12 @@ rm "$FIXTURE/STRAY.adoc"
 
 # 3. A REQUIRED allowlist entry that is absent fails, and is named.
 #    This is the direction that was missing, and the reason the allowlist rotted.
-mv "$FIXTURE/README.adoc" "$FIXTURE/machine-readable/README.adoc.parked"
+mv "$FIXTURE/README.adoc" "$FIXTURE/.machine_readable/README.adoc.parked"
 if out=$(bash "$CHECKER" "$FIXTURE" 2>&1); then
     fail "missing required entry did not fail the gate"
 fi
 grep -q 'README.adoc' <<<"$out" || fail "failure did not name the missing entry"
-mv "$FIXTURE/machine-readable/README.adoc.parked" "$FIXTURE/README.adoc"
+mv "$FIXTURE/.machine_readable/README.adoc.parked" "$FIXTURE/README.adoc"
 
 # 4. An OPTIONAL entry that is absent passes. Capability-gated and template-only
 #    material is legitimately missing in a conforming repo.
@@ -58,7 +58,7 @@ bash "$CHECKER" "$FIXTURE" | grep -q '^PASS:' || fail "absent ?optional entry wr
 #    was the probe that was wrong.)
 printf '*.tmp\n' > "$FIXTURE/.gitignore"
 printf 'x\n' > "$FIXTURE/build-output.tmp"
-sed -i 's|^README.adoc$|README.adoc\n.gitignore|' "$FIXTURE/machine-readable/root-allow.txt"
+sed -i 's|^README.adoc$|README.adoc\n.gitignore|' "$FIXTURE/.machine_readable/root-allow.txt"
 bash "$CHECKER" "$FIXTURE" | grep -q '^PASS:' || fail "git-ignored root entry was wrongly treated as drift"
 
 
@@ -99,7 +99,7 @@ rm "$DOTTED/STRAY.adoc"
 # 8. BOTH spellings present is refused as setup error (2), not silently
 #    resolved: two allowlists cannot both be canonical.
 mkdir -p "$DOTTED/machine-readable"
-cp "$DOTTED/.machine_readable/root-allow.txt" "$DOTTED/machine-readable/root-allow.txt"
+cp "$DOTTED/.machine_readable/root-allow.txt" "$DOTTED/.machine_readable/root-allow.txt"
 set +e
 bash "$CHECKER" "$DOTTED" >/dev/null 2>&1
 rc=$?
@@ -116,6 +116,6 @@ rc=$?
 set -e
 [ "$rc" -eq 2 ] || fail "absent allowlist returned $rc, expected 2"
 grep -q '.machine_readable/root-allow.txt' <<<"$out" || fail "error did not name the dotted path"
-grep -q 'machine-readable/root-allow.txt'  <<<"$out" || fail "error did not name the hyphenated path"
+grep -q '.machine_readable/root-allow.txt'  <<<"$out" || fail "error did not name the hyphenated path"
 
 echo "PASS: check-root-shape.sh fails in both directions, honours '?', and resolves both spellings"

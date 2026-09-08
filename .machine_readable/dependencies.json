@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "dependencies": [
+    {
+      "name": "affinescript",
+      "repository": "https://github.com/hyperpolymath/affinescript",
+      "revision": "eaf4f4912f74d32c6837035927b8028faa471416",
+      "role": "compiler",
+      "status": "local compiler exercised; clean CI build required"
+    },
+    {
+      "name": "anytype",
+      "repository": "https://github.com/hyperpolymath/anytype",
+      "revision": "38d6fee1fdb78bd08fd9ef451c35af7537ec1c08",
+      "role": "graded kernel reference",
+      "status": "architecture reference; runtime integration not implemented"
+    },
+    {
+      "name": "systemet",
+      "repository": "https://github.com/hyperpolymath/systemet",
+      "revision": "b4a59d0e33c45d6419a3e426832f7d84286048ee",
+      "role": "semantic authority",
+      "status": "theory reference; application proofs not implemented"
+    }
+  ]
+}
