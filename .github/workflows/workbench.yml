@@ -39,6 +39,7 @@ jobs:
         run: |
           pin=$(bun -e 'console.log(require("./.machine_readable/dependencies.json").dependencies.find(x => x.name === "affinescript").revision)')
           git clone https://github.com/hyperpolymath/affinescript.git "$RUNNER_TEMP/affinescript"
+          git -C "$RUNNER_TEMP/affinescript" fetch --depth 1 origin "$pin"
           git -C "$RUNNER_TEMP/affinescript" checkout --detach "$pin"
       - name: Build compiler
         shell: bash
