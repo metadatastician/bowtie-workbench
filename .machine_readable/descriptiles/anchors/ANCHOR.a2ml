@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: MPL-2.0
+[metadata]
+project = "bowtie-workbench"
+version = "0.1.0"
+last-updated = "2026-09-08"
+
+[anchor]
+schema = "hyperpolymath.anchor/1"
+repo = "metadatastician/bowtie-workbench"
+authority = "upstream-canonical"
+[identity]
+project = "Bowtie Workbench"
+kind = "application"
+one-sentence = "Evidence-linked risk and opportunity decisions across changing work systems"
+domain = "human factors and sociotechnical safety"
+[semantic-authority]
+owns = ["Application domain model", "Decision-support workflow"]
+extends-not-redefines = ["hyperpolymath/systemet", "hyperpolymath/anytype", "hyperpolymath/affinescript"]
+[implementation-policy]
+allowed = ["AffineScript", "JavaScript", "HTML", "CSS", "Bun", "Shell", "Just", "AsciiDoc"]
+[golden-path]
+smoke-test-command = ["just test", "just validate-rsr"]
+success-criteria = ["WebAssembly policy exports execute correctly", "Prototype import and CSP checks pass", "RSR checks pass"]

@@ -7,7 +7,7 @@
 :toc:
 
 The single authoritative map of this repository. It is generated from the
-tree and from the annotations in `machine-readable/root-allow.txt`, and CI
+tree and from the annotations in `.machine_readable/root-allow.txt`, and CI
 fails if it drifts, so it cannot rot the way its five hand-written
 predecessors did.
 
@@ -23,7 +23,7 @@ predecessors did.
 
 | `.cursorrules`
 | yes
-| ROOT, so the copies formerly under machine-readable/ai/ were inert.
+| ROOT, so the copies formerly under .machine_readable/ai/ were inert.
 
 | `.devcontainer/`
 | optional
@@ -113,7 +113,7 @@ predecessors did.
 | optional
 | Idris2 package for the ABI seam; only where the abi capability is declared
 
-| `archetypes/`
+| `archetypes`
 | optional
 | template-only variation seam (ADR-0003); `just repo-init` removes it from minted repos
 
@@ -149,9 +149,9 @@ predecessors did.
 | optional
 | `guix build -f guix.scm` requires it at root; only where reproducible-build is declared
 
-| `machine-readable/`
+| `machine-readable`
 | yes
-| manifests, contractiles, policies. Formerly .machine_readable/ — un-hidden 2026-08, because a quarter of the repo should not be invisible
+| -
 
 | `mise.toml`
 | yes
@@ -251,7 +251,7 @@ your own repo - but do not read their emptiness as neglect here.
 == Where things are enforced
 
 * Root shape - `scripts/check-root-shape.sh` against
-  `machine-readable/root-allow.txt`, run by `.github/workflows/estate-rules.yml`.
+  `.machine_readable/root-allow.txt`, run by `.github/workflows/estate-rules.yml`.
   The check is bidirectional: unlisted entries fail, and required entries
   that are absent also fail.
 * This map - `just repo-map` must produce no diff.

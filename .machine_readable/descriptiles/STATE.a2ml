@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: MPL-2.0
+[metadata]
+project = "bowtie-workbench"
+version = "0.1.0"
+last-updated = "2026-09-08"
+
+[project-context]
+name = "Bowtie Workbench"
+purpose = "Risk, opportunity and organisational learning across changing sociotechnical systems"
+[position]
+phase = "implementation"
+maturity = "experimental"
+status = "active"
+[implemented]
+interface = "Imported self-contained browser prototype with IndexedDB and JSON export"
+core = "AffineScript appetite and learning-closure predicates compiled and exercised as WebAssembly"
+[boundaries]
+browser-core-integration = "planned"
+anytype-runtime-integration = "planned"
+systemet-proof-instantiation = "planned"
+production-deployment = "not deployed"
+[next-actions]
+items = ["Differentially test and wire the AffineScript policy into the browser", "Extract a versioned evidence graph and lossless import contract", "Audit upstream libraries against this workload", "Validate with practitioners and representative work scenarios"]

@@ -1,0 +1,101 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= AffineScript library roadmap
+:toc:
+
+== Observation horizon
+
+This assessment covers the local AffineScript checkout at
+`eaf4f4912f74d32c6837035927b8028faa471416`, its stdlib inventory and selected
+source declarations, plus the supplied browser prototype. It is not an audit of
+all AffineScript packages or proof that a named module works on every backend.
+Only the workbench's small policy kernel has been executed for this application.
+Source presence, extern declarations, runtime adapters and verified behaviour are
+different evidence levels. Pins for all three upstreams are in
+`.machine_readable/dependencies.json`.
+
+== First libraries, ordered by dependency
+
+Names under "proposed" below are design names, not published packages.
+
+[cols="1,2,3,3",options="header"]
+|===
+| Priority | Capability | Reuse evidence | Required work and acceptance evidence
+| P0 | Core values and validated boundaries
+| `option.affine`, `result.affine`, `collections.affine`, `dict.affine`,
+`string.affine`, `json.affine` exist; not application-validated.
+| Unknown/value/conflict distinctions, stable typed IDs, bounded text, dates,
+units and schema versions. Reject malformed input, preserve unknowns on round trip.
+| P0 | Evidence and provenance (proposed `Evidence`)
+| Prototype has evidence text, confidence, test dates and revision history.
+| Source references, observations versus claims, authorship, timestamps, validity
+windows, contradiction and retraction. Evidence can be cited repeatedly.
+| P0 | Decision and control lifecycle (proposed `Assurance`)
+| Workbench `policy.affine` executes as WebAssembly; upstream `Transaction.affine`
+and `Aggregate.affine` are candidates requiring adapter/backend tests.
+| Verified/planned/degraded/failed states, evidence expiry, explicit decision
+authority, conditional acceptance and verified learning closure. Test transitions
+and replay; no Boolean alone constitutes a proof of a valid transition.
+| P0 | Serialization and persistence boundary
+| `json.affine`, `Ajv.affine`, `AlibSchema.affine`, `Sqlite.affine` present;
+several expose extern host operations. Prototype uses IndexedDB.
+| Lossless JSON schema and migrations first. Then an IndexedDB adapter, or a
+separately chosen local database, with atomic revisions, conflicts, rollback and
+recovery tests. Existing SQLite bindings do not establish an LMDB implementation.
+| P1 | Typed temporal evidence graph (proposed `WorkGraph`)
+| Prototype has typed causal links, AND/OR gates, feedback and shared dependencies.
+| Stable directed multigraph, provenance per edge, organisational levels,
+cycles/feedback timing, hyperedge/gate semantics and alternative hypotheses.
+Test missing endpoints, accidental cycles and shared-dependency counterexamples.
+| P1 | Browser application boundary
+| `affinescript-tea`, `affinescript-dom`, `Canvas.affine` present in the checkout.
+| Audit Bun/browser support and ownership at callbacks. Port state/update logic
+with differential tests; retain accessible DOM, keyboard navigation, focus and
+print/export. A canvas diagram requires a complete textual equivalent.
+| P1 | Time, units and change tracking (proposed `Temporal`)
+| Prototype date helpers and snapshots; no application-qualified library selected.
+| UTC instants versus local dates, intervals, clocks, evidence freshness,
+version comparison and deterministic replay. Test boundary dates and clock injection.
+| P2 | Uncertainty and decision analysis (proposed `Uncertainty`, `Decision`)
+| `math.affine` exists; numerical/backend correctness is not established here.
+| Intervals, distributions, seeded sampling, Bayesian updating where justified,
+sensitivity, dependence and multi-criteria alternatives. Validate against published
+benchmarks and an independent implementation. Never multiply ordinal 1–5 bands
+into probabilities or assume independent barriers without evidence.
+| P2 | Human factors and learning methods (proposed `WorkMethods`)
+| No packaged implementation selected in this bounded inspection.
+| Versioned method modules for workload, cognitive work analysis, Tripod,
+AcciMap, STPA and FRAM. Keep method-specific semantics and validation; check
+instrument terms before redistributing questionnaires or scoring algorithms.
+| P3 | Synchronisation, access and interchange
+| `Http.affine`, `Crypto.affine`, `Network.affine` present; not integrated here.
+| Explicit authority, revocation, audit, concurrent edits, consented sharing and
+portable exports. Offline recovery must work before multi-user synchronisation.
+|===
+
+== AnyType and System ET contract
+
+https://github.com/hyperpolymath/systemet[System ET] is the theory and owns the
+layering and invariants. https://github.com/hyperpolymath/anytype[AnyType] is its
+parameterised graded kernel. https://github.com/hyperpolymath/affinescript[AffineScript]
+is the intended affine-plus-cost product profile. These roles come from the
+upstream READMEs; this project does not assert the full chain is implemented.
+
+Investigate whether review/commit authority can be represented by a consumed
+capability, with storage/network effects explicit. Keep durable evidence reusable:
+affinity of a decision token does not mean a source may only be quoted once.
+Evidence freshness needs time and policy semantics beyond ownership typing.
+Semantic compatibility across upstream revisions requires explicit testing and
+upstream proof obligations; matching type names is insufficient.
+
+== Compiler qualification before expansion
+
+Run focused compile-and-execute probes for tagged variants, records, collections,
+strings, imports, externs, callbacks, floats and heap values on the selected target.
+Exercise compiler rejection with known invalid source and runtime rejection with
+malformed interchange data. Upstream `issues-drafts/` filenames identify concerns
+worth triaging; they are not evidence those concerns remain unresolved at the pin.
+Record compiler/source/output hashes and compare clean builds. The initial kernel
+uses integer/Boolean operations to establish a tested starting slice.
+
+The next implementation should qualify the P0 value, evidence and persistence
+boundaries before adding a simulation engine or a broad dependency catalogue.

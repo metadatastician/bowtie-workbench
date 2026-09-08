@@ -1,0 +1,101 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= Central question and research programme
+:toc:
+
+== Proposed central question
+
+*How can people make, justify and revisit decisions about risk and opportunity
+as real work, organisational pressures, controls and evidence change, while
+preserving human agency, wellbeing and the capacity to learn?*
+
+This is a design proposal, not a validated research result. The unit of analysis
+is a situated work system: people pursuing goals with technology, resources,
+constraints and competing demands. The unit of accountability is an explicit
+decision with evidence, uncertainty, authority, conditions and review triggers.
+The bowtie is the first projection of that model; it cannot represent the entire
+system by itself. Support successful adaptations and opportunities alongside harm.
+
+== Research foundations and concrete consequences
+
+[cols="1,2,3",options="header"]
+|===
+| Foundation | Source-grounded idea | Proposed application consequence
+| Jens Rasmussen
+| Risk management spans interacting organisational and societal levels, with
+adaptation shaped by constraints and performance boundaries.
+| Add actors, organisational levels, competing pressures, feedback delays,
+decision boundaries and longitudinal drift. Preserve alternative explanations.
+| James Reason
+| The system approach examines conditions and defences surrounding fallible people.
+| Model barrier purpose, degradation, dependencies, latent conditions and evidence.
+Do not make "operator error" a terminal explanation or generate blame rankings.
+| Jop Groeneweg / Tripod
+| Organisational deficiencies can be investigated and addressed through structured
+condition assessment and follow-through.
+| Link observations to local conditions, organisational factors, accountable
+interventions and verified learning. Treat factor categories as interpretive lenses.
+| Ergonomics / human factors
+| Human wellbeing and overall system performance are joint design concerns.
+| Represent workload, task design, accessibility, environment, coordination and
+distribution of burdens. Involve people doing the work in model revision.
+| Leveson / STAMP and STPA
+| Hazard scenarios can be analysed through control structure and unsafe control.
+| Add control actions, constraints, feedback and process-model assumptions as a
+distinct view. Do not flatten control flaws into failed hardware components.
+| Hollnagel / FRAM
+| Functional couplings and variability provide a way to examine everyday work.
+| Represent work functions and their couplings as a future model/view; investigate
+successful adaptation as well as unwanted outcomes.
+| Simon; Kahneman
+| Decision-making is bounded; judgement requires attention to how problems are framed.
+| Make alternatives, dissent, reference classes, uncertainty and information costs
+visible. Reduce decision burden instead of adding a mandatory field for every theory.
+|===
+
+The application consequences above are our synthesis, not claims that the named
+authors endorsed this product or that their methods are interchangeable.
+
+== Questions to answer with practitioners
+
+. What decision is being made, by whom, for whom, over what horizon?
+. How does work actually proceed, including adaptations that make it succeed?
+. Where could control be lost, what follows, and which dependencies defeat several
+  apparent defences at once?
+. What supports each claim, what contradicts it, how old is the evidence, and what
+  observation would change the decision?
+. Who receives benefits and burdens? Which constraints cannot be traded away?
+. What changed after an intervention, how will its effects be checked, and what
+  reopens an apparently completed learning action?
+
+== First evaluable hypothesis
+
+An evidence-linked bowtie with explicit uncertainty and review triggers should
+help a team identify unsupported critical-control claims and shared dependencies
+more reliably than its existing static assessment, without excessive extra work.
+
+Evaluate this on synthetic or consented cases before operational use. Compare
+the existing process and prototype using counterbalanced tasks. Predefine seeded
+missing evidence, a shared dependency, stale verification and a misleading
+"within appetite" claim. Measure detection, appropriate abstention, explanation
+traceability, review-trigger detection, task time and experienced workload.
+Use independent domain review for the reference assessment, record disagreement,
+and retain negative results. The sample size and success thresholds need a study
+design; they are not invented here. NASA-TLX is a candidate workload instrument,
+not a direct accident-risk measure.
+
+== Sources consulted on 2026-09-08
+
+* Rasmussen (1997), https://doi.org/10.1016/S0925-7535(97)00052-0[Risk management in a dynamic society: a modelling problem], Safety Science 27, 183–213. Publisher abstract consulted.
+* Reason (2000), https://www.bmj.com/content/320/7237/768.abstract[Human error: models and management], BMJ 320, 768–770. Publisher abstract consulted.
+* Groeneweg (2002), https://repository.tno.nl/SingleDoc?docId=12079[Controlling the controllable: the management of safety]. TNO bibliographic record and summary consulted; full book not obtained.
+* CIEHF, https://ergonomics.org.uk/knowledge-hub/what-is-ergonomics.html[What is ergonomics?], including the IEA definition.
+* MIT, https://psas.scripts.mit.edu/home/books-and-handbooks/[STAMP/STPA books and handbooks] and https://sunnyday.mit.edu/STAMP-publications.html[publications]. Further methodological reading required.
+* Hollnagel, https://functionalresonance.com/wp-content/uploads/2024/08/The-FRAM-2.0.pdf[FRAM manual]. Method reference; implementation and validation deferred.
+* Simon, https://www.nobelprize.org/uploads/2018/06/simon-lecture.pdf[1978 Nobel lecture]; Kahneman, https://www.nobelprize.org/prizes/economic-sciences/2002/kahneman/lecture/[Maps of Bounded Rationality]. Reading programme; no automatic bias classifier proposed.
+* NASA, https://www.nasa.gov/human-systems-integration-division/nasa-task-load-index-tlx/[Task Load Index]. Official instrument description consulted.
+
+Next reading: Rasmussen's skill/rule/knowledge framework and cognitive work
+analysis; Vicente on ecological interface design; Woods and Hollnagel on joint
+cognitive systems; Klein on naturalistic decision-making; Hutchins on distributed
+cognition; participatory ergonomics and sociotechnical work design. These are
+future strands to investigate, not completed literature coverage.

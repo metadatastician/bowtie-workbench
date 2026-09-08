@@ -1,0 +1,4 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= Contributing
+
+Use the pinned AffineScript compiler and Bun. Run `just test` and `just validate-rsr`. Preserve the browser workspace schema until a tested migration exists. Add a counterexample with every new domain invariant. Keep research hypotheses separate from observations and authority to decide. See `.github/CONTRIBUTING.md` for community process.

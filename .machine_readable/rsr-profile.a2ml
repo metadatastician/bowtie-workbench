@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: MPL-2.0
+[rsr-profile]
+version = "1.0.0"
+spec = "rsr-criteria-v2"
+declares-against = "2.0.0-draft"
+# Baseline only. No ABI, container or formal-proof capability is asserted.
+capabilities = []

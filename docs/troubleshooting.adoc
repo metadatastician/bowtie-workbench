@@ -1,0 +1,4 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= Troubleshooting
+
+Compiler missing: build the pinned `hyperpolymath/affinescript` revision, then set `AFFINESCRIPT_BIN`. Build output unwritable: set `BOWTIE_BUILD_DIR` to a writable directory. Browser data missing: confirm the same URL/origin; restore a JSON export. Storage conflict: preserve current work with export, reload and compare revisions. Do not silently replace a failed data store.

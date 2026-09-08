@@ -18,7 +18,7 @@ Read, in this order, before running anything:
 
 . `0-AI-MANIFEST.a2ml` — the universal AI entry point at the repository root.
 . `CLAUDE.md` — the generated arrival pack (estate doctrine + repo identity).
-. `machine-readable/descriptiles/STATE.a2ml` — current phase and completion.
+. `.machine_readable/descriptiles/STATE.a2ml` — current phase and completion.
 
 Do not infer the repository's purpose from its name. If a fact is not written
 down, record it as `UNASSIGNED` rather than inventing it.
@@ -30,7 +30,7 @@ local checkouts across this estate are routinely stale or carry sweep debris.
 
 [source,bash]
 ----
-git clone https://github.com/hyperpolymath/rsr-template-repo.git my-project
+git clone https://github.com/metadatastician/bowtie-workbench.git my-project
 cd my-project
 rm -rf .git && git init
 ----
