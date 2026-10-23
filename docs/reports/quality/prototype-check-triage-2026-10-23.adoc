@@ -1,0 +1,146 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= Prototype check triage — issue #8
+:toc:
+:toclevels: 2
+
+== Determination
+
+The `prototype` check is *fixed*, not retired and not exempted.
+
+The issue required one of three outcomes to be chosen and recorded. This is the
+record. No step was moved to `continue-on-error`, no step was demoted to a
+warning, and no entry was added to an exemption list.
+
+[cols="1,4",options="header"]
+|===
+| Question | Answer
+
+| What was red
+| `.github/workflows/workbench.yml`, job `prototype`, step
+  `bash scripts/check-root-shape.sh .`
+
+| Was it red on `main` before the PR that surfaced it
+| Yes. Red on `main` at `88b0467` (2026-09-15), and on every Workbench run
+  since — `35014629431`, `34293083510`, and the run for `20530be` itself
+  (`36920198861`).
+
+| Was the cause related to the citation PR
+| No. PR #7 changed one line of `CITATION.cff`. The failing step reads the
+  filesystem, not citation metadata.
+
+| What was the actual cause
+| `GEMINI.md` is tracked at the repository root and was not listed in
+  `.machine_readable/root-allow.txt`. The allowlist is a *bidirectional*
+  contract: an unlisted root entry is drift, so the gate correctly failed.
+
+| Why was the entry missing
+| The repo carried a newer template artifact (`GEMINI.md`, a root-only agent
+  pointer) than its copy of the allowlist. The parent template's own
+  `root-allow.txt` lists `?GEMINI.md`; this repo's copy predates that line.
+  This is template-sync drift, not a defect in the file at root.
+
+| What fixed it
+| `.machine_readable/root-allow.txt` gained the sanctioned `?GEMINI.md` entry,
+  with its justification. The `?` marker is the allowlist's own documented
+  mechanism for an entry that is permitted but legitimately absent in some
+  conforming repo. The gate keeps enforcing both directions.
+|===
+
+== Why this is a fix and not a demotion
+
+The allowlist is not a suppression list bolted onto the check; it *is* the
+check's contract, and the script's own failure text names it as the correct
+place to record a justified root entry. Two properties keep that honest:
+
+. The check still fails on any root entry that is not in the allowlist. The
+  entry added here names one file, at root, for a documented reason; it does
+  not widen the pattern.
+. The check still fails when a *required* allowlist entry disappears. The
+  `?` marker was not applied broadly to make the tree pass.
+
+`tests/shape/check_root_shape_test.sh` pins both directions and the `?`
+marker against fixtures. That self-test was itself broken and had never run in
+CI — the very failure mode its header warns about ("a gate that only ever
+passes looks identical to a gate that works"). It is repaired and now runs as
+a step in the `prototype` job, so the gate cannot silently stop enforcing.
+
+== Secondary defects found while fixing it
+
+[cols="1,4",options="header"]
+|===
+| Defect | Disposition
+
+| `tests/shape/check_root_shape_test.sh` created `machine-readable/` but wrote
+  the fixture allowlist to `.machine_readable/`, so case 1 aborted with a shell
+  error and every later case never ran.
+| Fixed. The fixture now creates the directory it writes to.
+
+| Case 8 ("both spellings present is refused") copied the allowlist onto
+  itself, so the second allowlist was never created and the case tested
+  nothing.
+| Fixed. It now copies to the hyphenated path.
+
+| Case 9's second assertion repeated the dotted path and so never proved the
+  hyphenated path was named in the error.
+| Fixed.
+
+| `scripts/gen-repo-map.sh` trimmed allowlist annotations with `xargs`, which
+  parses text as shell-quoted words: an annotation containing an apostrophe was
+  truncated at the quote, and the generated map silently disagreed with the
+  allowlist.
+| Fixed. Trimming is now a quote-safe `sed`. The map is regenerated and its
+  determinism test passes.
+
+| `docs/architecture/REPOSITORY-MAP.adoc` was stale: it predated `GEMINI.md`,
+  `.machine_readable/`, and `src/core/policy.affine`, and still described
+  `machine-readable/` and `archetypes/`.
+| Regenerated from the tree. The generator is the single source; the committed
+  map is now current.
+
+| Nothing ran the two gates before a push, so a root file could be added and
+  the failure would surface days later in CI.
+| Fixed. `ci/.pre-commit-config.yaml` now runs `check-root-shape.sh` and
+  `check-no-placeholders.sh` as local hooks, and the gate self-test runs in the
+  `prototype` job.
+|===
+
+== Evidence
+
+Local, before pushing:
+
+[source,console]
+----
+$ bash scripts/check-root-shape.sh .
+PASS: root matches allowlist (42 entries; 33 required, 13 optional)
+
+$ bash scripts/check-no-placeholders.sh .
+PASS: no unfilled {{PLACEHOLDER}} tokens
+
+$ bash tests/shape/check_root_shape_test.sh
+PASS: check-root-shape.sh fails in both directions, honours '?', and resolves both spellings
+
+$ bash tests/shape/repo_map_determinism_test.sh
+PASS: repository map is byte-identical across locales, and committed copy is current
+
+$ bun test tests/prototype.test.mjs
+3 pass, 0 fail
+----
+
+CI: the `prototype` job on the pull request that carries this record, and the
+same job on `main` after merge. The issue is closed on that evidence, not on
+the local run.
+
+== Residual risk and what would catch it
+
+* *Template drift recurs.* The next root-level agent entry the template adds
+  will fail the gate the same way until the allowlist is synced. That is the
+  intended behaviour — the gate exists to make the drift visible — and the
+  pre-commit hook now makes it visible at commit time rather than in CI.
+* *Governance reds are separate.* The `governance /` checks that were also red
+  on PR #7 are tracked outside this repo (`hyperpolymath/standards#994` and
+  `#903`) and are not addressed here. This record covers `prototype` only.
+* *The check can still be defeated by editing the allowlist.* No automated
+  control prevents a maintainer from adding a broad pattern. The protection is
+  the review requirement on changes to `.machine_readable/root-allow.txt`, plus
+  the regeneration of the map that makes every entry and its justification
+  visible in one generated artefact.

@@ -22,6 +22,11 @@ jobs:
       - run: bun test tests/prototype.test.mjs
       - run: bash scripts/check-no-placeholders.sh .
       - run: bash scripts/check-root-shape.sh .
+      # A gate that only ever passes is indistinguishable from a gate that
+      # works. Its self-test proves it can fail in both directions; running it
+      # here means a gate regression is red in CI, not silently trusted.
+      - name: Prove the root-shape gate can fail
+        run: bash tests/shape/check_root_shape_test.sh
   affine-core:
     runs-on: ubuntu-24.04
     timeout-minutes: 25

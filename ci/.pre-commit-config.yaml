@@ -60,3 +60,25 @@ repos:
         language: system
         pass_filenames: false
         files: '^(\.machine_readable/descriptiles/.*|CLAUDE\.md)$'
+
+      # The two gates the `prototype` CI job runs, run here first.
+      #
+      # Issue #8: GEMINI.md was added at the repository root by a docs commit,
+      # nothing ran check-root-shape.sh locally, and the gate went red in CI
+      # three days of commits later. The allowlist is the contract for root
+      # shape, so adding a root file without touching it is drift by
+      # definition. Catching that at commit time costs seconds; catching it in
+      # CI costs a red default branch.
+      - id: check-root-shape
+        name: Root shape matches .machine_readable/root-allow.txt
+        entry: bash scripts/check-root-shape.sh .
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: check-no-placeholders
+        name: No unfilled template tokens
+        entry: bash scripts/check-no-placeholders.sh .
+        language: system
+        pass_filenames: false
+        always_run: true
