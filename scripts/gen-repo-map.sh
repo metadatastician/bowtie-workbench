@@ -38,13 +38,22 @@ mapfile -t ENTRIES < <(git ls-files | awk -F/ '{print $1}' | sort -u)
 
 # name -> annotation, harvested from the allowlist's own comments.
 declare -A NOTE=() OPTIONAL=()
+
+# Trim without xargs. `xargs` is not a whitespace stripper: it parses the word
+# as shell-quoted text, so an annotation containing an apostrophe ("the
+# template's allowlist") is reported as an unmatched quote and TRUNCATED at the
+# quote. The allowlist is prose written by humans; apostrophes are ordinary
+# there, and the generated map must show the sentence the allowlist actually
+# contains.
+trim() { printf '%s' "$1" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//'; }
+
 while IFS= read -r line; do
     [[ "$line" =~ ^[[:space:]]*# ]] && continue
     [[ -z "${line// }" ]] && continue
-    raw="${line%%#*}"; raw="$(echo "$raw" | xargs || true)"
+    raw="$(trim "${line%%#*}")"
     [ -z "$raw" ] && continue
     comment="${line#*#}"; [ "$comment" = "$line" ] && comment=""
-    comment="$(echo "$comment" | xargs || true)"
+    comment="$(trim "$comment")"
     key="${raw%/}"
     if [[ "$key" == '?'* ]]; then key="${key#\?}"; OPTIONAL["$key"]=1; fi
     NOTE["$key"]="$comment"

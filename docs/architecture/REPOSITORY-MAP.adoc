@@ -61,6 +61,10 @@ predecessors did.
 | yes
 | the Hypatia scanner reads it from the repo root
 
+| `.machine_readable/`
+| yes
+| manifests, contractiles, policies. Formerly .machine_readable/ — un-hidden 2026-08, because a quarter of the repo should not be invisible
+
 | `.mailmap`
 | yes
 | git reads .mailmap from the worktree root only
@@ -93,6 +97,10 @@ predecessors did.
 | yes
 | generated arrival pack; the generator, pre-commit and Claude Code all read it from the ROOT (do not hand-edit; edit the a2ml source)
 
+| `GEMINI.md`
+| optional
+| pointer to CLAUDE.md for repos without AGENTS.md yet; the Gemini CLI reads it from the project ROOT and takes no other path. OPTIONAL: a repo that has gained AGENTS.md drops the pointer instead of retargeting it. Sanctioned by the parent template's own allowlist, from which this copy had drifted (issue #8)
+
 | `Justfile`
 | yes
 | thin; delegates phases to build/just/*.just
@@ -112,10 +120,6 @@ predecessors did.
 | `abi.ipkg`
 | optional
 | Idris2 package for the ABI seam; only where the abi capability is declared
-
-| `archetypes`
-| optional
-| template-only variation seam (ADR-0003); `just repo-init` removes it from minted repos
 
 | `benches/`
 | optional
@@ -148,10 +152,6 @@ predecessors did.
 | `guix.scm`
 | optional
 | `guix build -f guix.scm` requires it at root; only where reproducible-build is declared
-
-| `machine-readable`
-| yes
-| -
 
 | `mise.toml`
 | yes
@@ -193,6 +193,7 @@ your own repo - but do not read their emptiness as neglect here.
 
 [cols="1"]
 |===
+| `.machine_readable/scripts/verification/`
 | `docs/governance/audit/`
 | `docs/governance/audit/compliance/`
 | `docs/governance/audit/effects/`
@@ -226,14 +227,12 @@ your own repo - but do not read their emptiness as neglect here.
 | `examples/`
 | `features/boj-server/`
 | `features/panic-attacker/`
-| `machine-readable/scripts/verification/`
 | `src/aspects/`
 | `src/aspects/integrity/`
 | `src/aspects/observability/`
 | `src/aspects/security/`
 | `src/bridges/`
 | `src/contracts/`
-| `src/core/`
 | `src/definitions/`
 | `src/errors/`
 | `src/interface/generated/`

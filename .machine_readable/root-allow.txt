@@ -34,6 +34,7 @@ CHANGELOG.adoc             # AsciiDoc is the estate-standard documentation forma
 CITATION.cff               # citation metadata; GitHub reads it from the root of the default branch only
 0-AI-MANIFEST.a2ml         # universal AI entry point
 CLAUDE.md                  # generated arrival pack; the generator, pre-commit and Claude Code all read it from the ROOT (do not hand-edit; edit the a2ml source)
+?GEMINI.md                 # pointer to CLAUDE.md for repos without AGENTS.md yet; the Gemini CLI reads it from the project ROOT and takes no other path. OPTIONAL: a repo that has gained AGENTS.md drops the pointer instead of retargeting it. Sanctioned by the parent template's own allowlist, from which this copy had drifted (issue #8)
 Justfile                   # thin; delegates phases to build/just/*.just
 coordination.k9            # repo-local session binding (template-mandated)
 

@@ -17,7 +17,7 @@ git -C "$FIXTURE" init -q
 git -C "$FIXTURE" config user.name "RSR fixture"
 git -C "$FIXTURE" config user.email "fixture@example.invalid"
 
-mkdir -p "$FIXTURE/machine-readable"
+mkdir -p "$FIXTURE/.machine_readable"
 cat > "$FIXTURE/.machine_readable/root-allow.txt" <<'ALLOW'
 # fixture allowlist
 .git/
@@ -99,7 +99,7 @@ rm "$DOTTED/STRAY.adoc"
 # 8. BOTH spellings present is refused as setup error (2), not silently
 #    resolved: two allowlists cannot both be canonical.
 mkdir -p "$DOTTED/machine-readable"
-cp "$DOTTED/.machine_readable/root-allow.txt" "$DOTTED/.machine_readable/root-allow.txt"
+cp "$DOTTED/.machine_readable/root-allow.txt" "$DOTTED/machine-readable/root-allow.txt"
 set +e
 bash "$CHECKER" "$DOTTED" >/dev/null 2>&1
 rc=$?
@@ -116,6 +116,6 @@ rc=$?
 set -e
 [ "$rc" -eq 2 ] || fail "absent allowlist returned $rc, expected 2"
 grep -q '.machine_readable/root-allow.txt' <<<"$out" || fail "error did not name the dotted path"
-grep -q '.machine_readable/root-allow.txt'  <<<"$out" || fail "error did not name the hyphenated path"
+grep -q 'machine-readable/root-allow.txt'  <<<"$out" || fail "error did not name the hyphenated path"
 
 echo "PASS: check-root-shape.sh fails in both directions, honours '?', and resolves both spellings"
