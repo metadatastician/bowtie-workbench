@@ -43,6 +43,9 @@ Build outputs go to `BOWTIE_BUILD_DIR`, defaulting under the developer estate's
 * link:docs/architecture.adoc[Architecture and data model]
 * link:docs/status/ROADMAP.adoc[Prioritised implementation sequence]
 * link:docs/status/READINESS.adoc[Evidence and readiness boundaries]
+* link:docs/proposals/interchange-ir.adoc[Interchange representation (BIM/1)]
+* link:docs/proposals/import-export.adoc[Import, export, OCR, localisation and approximate matching]
+* link:docs/proposals/ultraplan-diagramming.adoc[Diagramming ultraplan]
 
 This application uses https://github.com/hyperpolymath/affinescript[AffineScript].
 https://github.com/hyperpolymath/anytype[AnyType] supplies the proposed graded kernel;

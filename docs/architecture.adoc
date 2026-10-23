@@ -25,6 +25,11 @@ are a separate milestone; the candidate's inputs are deliberately narrower.
 . Views: bowtie first; organisational/AcciMap, control/STPA, functional/FRAM and
   decision views share stable evidence references while retaining method semantics.
 
+Interchange is designed separately from storage: see
+link:proposals/interchange-ir.adoc[the BIM/1 proposal] for the canonical model
+and link:proposals/import-export.adoc[the pipeline proposal] for adapters, OCR,
+localisation and approximate matching.
+
 Use AffineScript for domain and application logic; Bun supports builds and tests.
 Keep browser JS at the host boundary until the upstream DOM/TEA support has been
 qualified. No new Deno dependency is introduced. No private package registry or

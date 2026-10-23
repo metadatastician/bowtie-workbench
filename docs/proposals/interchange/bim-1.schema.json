@@ -1,0 +1,519 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:bowtie-workbench:bim:1",
+  "title": "Bowtie Interchange Model, major version 1",
+  "description": "Canonical interchange document for the Bowtie Workbench. Semantics live in `document`; presentation lives in `layout`; provenance is required on every node and edge. See docs/proposals/interchange-ir.adoc.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ir", "document"],
+  "properties": {
+    "ir": { "const": "bim/1" },
+    "document": { "$ref": "#/$defs/Document" },
+    "layout": {
+      "type": "object",
+      "description": "Presentation overlay keyed by graph id. Optional; discarding it changes nothing semantic.",
+      "additionalProperties": { "$ref": "#/$defs/GraphLayout" }
+    },
+    "resources": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Resource" }
+    },
+    "provenance": { "$ref": "#/$defs/Provenance" },
+    "extensions": { "$ref": "#/$defs/Extensions" }
+  },
+
+  "$defs": {
+    "Extensions": {
+      "type": "object",
+      "description": "Namespaced vendor data with no BIM meaning yet. Keys must be reverse-DNS or a registered short name.",
+      "additionalProperties": true
+    },
+
+    "LocalizedText": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["default"],
+      "properties": {
+        "default": { "type": "string" },
+        "translations": {
+          "type": "object",
+          "description": "BCP-47 tag to string.",
+          "propertyNames": { "type": "string", "minLength": 2 },
+          "additionalProperties": { "type": "string" }
+        },
+        "format": {
+          "enum": ["text/plain", "text/asciidoc", "text/markdown"],
+          "default": "text/plain"
+        }
+      }
+    },
+
+    "Quantity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "unit"],
+      "properties": {
+        "value": { "type": "number" },
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "description": "UCUM code. Never omitted."
+        },
+        "uncertainty": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "low": { "type": "number" },
+            "high": { "type": "number" },
+            "distribution": { "type": "string" }
+          }
+        }
+      }
+    },
+
+    "Confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scheme", "value"],
+      "properties": {
+        "scheme": { "enum": ["fuzzy", "probability", "ordinal"] },
+        "value": {
+          "description": "0.0 to 1.0 for fuzzy and probability; a label for ordinal.",
+          "oneOf": [{ "type": "number", "minimum": 0, "maximum": 1 }, { "type": "string" }]
+        },
+        "basis": { "type": "string" }
+      }
+    },
+
+    "Reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uri"],
+      "properties": {
+        "uri": { "type": "string" },
+        "label": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "retrieved": { "type": "string", "format": "date-time" }
+      }
+    },
+
+    "Review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state"],
+      "properties": {
+        "state": { "enum": ["unreviewed", "accepted", "rejected", "corrected"] },
+        "reviewer": { "type": ["string", "null"] },
+        "at": { "type": ["string", "null"], "format": "date-time" },
+        "note": { "type": "string" }
+      }
+    },
+
+    "Provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method"],
+      "properties": {
+        "adapter": { "type": "string" },
+        "method": { "enum": ["declared", "inferred", "ocr", "suggested", "manual"] },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": { "type": "string" },
+            "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+          }
+        },
+        "locator": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "sheet": { "type": "string" },
+            "range": { "type": "string" },
+            "row": { "type": "integer", "minimum": 1 },
+            "page": { "type": "integer", "minimum": 1 },
+            "bbox": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "textSpan": {
+              "type": "array",
+              "items": { "type": "integer", "minimum": 0 },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        },
+        "captured": { "type": "string", "format": "date-time" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "review": { "$ref": "#/$defs/Review" }
+      }
+    },
+
+    "Alias": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scheme", "value"],
+      "properties": {
+        "scheme": { "type": "string" },
+        "value": { "type": "string" }
+      }
+    },
+
+    "Node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "label", "provenance"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": {
+          "enum": [
+            "hazard",
+            "top-event",
+            "threat",
+            "consequence",
+            "barrier",
+            "escalation",
+            "intermediate-event",
+            "opportunity",
+            "learning",
+            "objective",
+            "goal",
+            "critical-success-factor",
+            "necessary-condition",
+            "precondition",
+            "action",
+            "intermediate-effect",
+            "desirable-effect",
+            "undesirable-effect",
+            "obstacle",
+            "milestone",
+            "injection",
+            "solution",
+            "ude",
+            "evidence",
+            "assumption",
+            "reservation",
+            "claim",
+            "decision",
+            "person",
+            "organisation",
+            "control",
+            "obligation",
+            "note",
+            "group"
+          ]
+        },
+        "label": { "$ref": "#/$defs/LocalizedText" },
+        "text": { "$ref": "#/$defs/LocalizedText" },
+        "fields": {
+          "type": "object",
+          "description": "Kind-specific fields, validated by the method registry.",
+          "additionalProperties": true
+        },
+        "aliases": { "type": "array", "items": { "$ref": "#/$defs/Alias" } },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/Reference" },
+              { "type": "string", "description": "Local resource id." }
+            ]
+          }
+        },
+        "confidence": { "$ref": "#/$defs/Confidence" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "provenance": { "$ref": "#/$defs/Provenance" },
+        "extensions": { "$ref": "#/$defs/Extensions" }
+      }
+    },
+
+    "Edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "from", "to", "provenance"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": {
+          "enum": [
+            "contributes",
+            "requires",
+            "inhibits",
+            "shared-dependency",
+            "feedback",
+            "weakens",
+            "same-as",
+            "linked-assessment",
+            "contains",
+            "annotates"
+          ]
+        },
+        "from": { "type": "string", "minLength": 1 },
+        "to": { "type": "string", "minLength": 1 },
+        "gate": { "enum": ["none", "and", "or", "xor"], "default": "none" },
+        "condition": { "$ref": "#/$defs/LocalizedText" },
+        "weight": { "type": "number", "minimum": -1, "maximum": 1 },
+        "lag": {
+          "type": "string",
+          "description": "ISO 8601 duration, or a stated qualitative delay where no duration is known. Required when kind is feedback (rule I4)."
+        },
+        "confidence": { "$ref": "#/$defs/Confidence" },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/Reference" },
+              { "type": "string" }
+            ]
+          }
+        },
+        "provenance": { "$ref": "#/$defs/Provenance" },
+        "extensions": { "$ref": "#/$defs/Extensions" }
+      }
+    },
+
+    "Graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "nodes", "edges"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": {
+          "type": "string",
+          "description": "Registered method vocabulary; unknown values are forward-compatible.",
+          "examples": [
+            "bowtie",
+            "causal",
+            "toc-crt",
+            "toc-frt",
+            "toc-prt",
+            "toc-trt",
+            "toc-ec",
+            "stpa",
+            "accimap",
+            "fault-tree",
+            "freeform"
+          ]
+        },
+        "title": { "$ref": "#/$defs/LocalizedText" },
+        "meta": { "type": "object", "additionalProperties": true },
+        "nodes": { "type": "array", "items": { "$ref": "#/$defs/Node" } },
+        "edges": { "type": "array", "items": { "$ref": "#/$defs/Edge" } },
+        "groups": { "type": "array", "items": { "$ref": "#/$defs/Group" } },
+        "annotations": { "type": "array", "items": { "$ref": "#/$defs/Annotation" } },
+        "policy": { "$ref": "#/$defs/Policy" },
+        "extensions": { "$ref": "#/$defs/Extensions" }
+      }
+    },
+
+    "Group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label"],
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "$ref": "#/$defs/LocalizedText" },
+        "members": { "type": "array", "items": { "type": "string" } },
+        "collapsed": { "type": "boolean", "default": false },
+        "provenance": { "$ref": "#/$defs/Provenance" }
+      }
+    },
+
+    "Annotation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "target", "text"],
+      "properties": {
+        "id": { "type": "string" },
+        "target": { "type": "string", "description": "Node, edge or group id." },
+        "text": { "$ref": "#/$defs/LocalizedText" },
+        "provenance": { "$ref": "#/$defs/Provenance" }
+      }
+    },
+
+    "Policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "appetiteStatement": { "$ref": "#/$defs/LocalizedText" },
+        "capacity": { "$ref": "#/$defs/LocalizedText" },
+        "constraints": { "type": "array", "items": { "$ref": "#/$defs/LocalizedText" } },
+        "triggers": { "type": "array", "items": { "$ref": "#/$defs/LocalizedText" } },
+        "likelihoodLabels": { "type": "array", "items": { "$ref": "#/$defs/LocalizedText" } },
+        "decision": { "$ref": "#/$defs/Decision" }
+      }
+    },
+
+    "Decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "choice": { "type": "string" },
+        "authority": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "rationale": { "$ref": "#/$defs/LocalizedText" },
+        "conditions": { "$ref": "#/$defs/LocalizedText" },
+        "expires": { "type": "string", "format": "date" },
+        "recordedAt": { "type": "string", "format": "date-time" },
+        "needsReview": { "type": "boolean" }
+      }
+    },
+
+    "Revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "at", "note"],
+      "properties": {
+        "id": { "type": "string" },
+        "at": { "type": "string", "format": "date-time" },
+        "note": { "$ref": "#/$defs/LocalizedText" },
+        "hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "author": { "type": "string" }
+      }
+    },
+
+    "Document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "created", "graphs"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "created": { "type": "string", "format": "date-time" },
+        "modified": { "type": "string", "format": "date-time" },
+        "revision": { "type": "integer", "minimum": 0 },
+        "generator": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": { "type": "string" },
+            "version": { "type": "string" }
+          }
+        },
+        "profiles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Named constraint sets, e.g. bowtie/workspace-v1."
+        },
+        "locale": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "default": { "type": "string", "minLength": 2 },
+            "available": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "graphs": { "type": "array", "items": { "$ref": "#/$defs/Graph" }, "minItems": 1 },
+        "policy": { "$ref": "#/$defs/Policy" },
+        "revisions": { "type": "array", "items": { "$ref": "#/$defs/Revision" } },
+        "integrity": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "algorithm": { "const": "sha-256" },
+            "value": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+          }
+        },
+        "loss": {
+          "type": "array",
+          "description": "Declared loss from a lossy import. Silent loss is a defect.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["field", "reason"],
+            "properties": {
+              "field": { "type": "string" },
+              "reason": { "type": "string" },
+              "recoverable": { "type": "boolean" }
+            }
+          }
+        },
+        "extensions": { "$ref": "#/$defs/Extensions" }
+      }
+    },
+
+    "Resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind"],
+      "properties": {
+        "id": { "type": "string" },
+        "kind": { "enum": ["document", "image", "audio", "dataset", "model"] },
+        "uri": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "mediaType": { "type": "string" },
+        "bytes": { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "GraphLayout": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": { "type": "integer", "minimum": 1 },
+        "nodes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "w": { "type": "number", "minimum": 0 },
+              "h": { "type": "number", "minimum": 0 },
+              "collapsed": { "type": "boolean" }
+            }
+          }
+        },
+        "edges": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "routing": { "enum": ["straight", "orthogonal", "curved", "spline"] },
+              "points": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": { "type": "number" },
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              }
+            }
+          }
+        },
+        "groups": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "w": { "type": "number", "minimum": 0 },
+              "h": { "type": "number", "minimum": 0 },
+              "collapsed": { "type": "boolean" }
+            }
+          }
+        },
+        "viewport": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "zoom": { "type": "number", "exclusiveMinimum": 0 },
+            "pan": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        },
+        "theme": { "type": "string" }
+      }
+    }
+  }
+}

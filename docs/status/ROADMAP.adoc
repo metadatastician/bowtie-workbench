@@ -15,3 +15,12 @@
 Initial vertical slice: one hazard, one loss-of-control event, two threats sharing
 a dependency, two consequences, a critical barrier with expiring evidence, and a
 learning action whose attempted closure is rejected until verification is present.
+
+== Design proposals under review
+
+These are proposals, not roadmap commitments. They exist so that the steps above
+can be argued with before they are built.
+
+* link:../proposals/interchange-ir.adoc[BIM/1 — the interchange representation]
+* link:../proposals/import-export.adoc[Interchange pipeline, OCR, localisation, agrep]
+* link:../proposals/ultraplan-diagramming.adoc[Diagramming ultraplan]

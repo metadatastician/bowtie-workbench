@@ -1,0 +1,643 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= Proposal: the interchange pipeline — import, export, OCR, localisation, fuzzy matching
+:toc:
+:toclevels: 3
+:figure-caption!:
+
+== Status
+
+*Draft for decision, 2026-10-23.* Companion to
+link:interchange-ir.adoc[the BIM/1 proposal]. No code in `src/` implements this
+yet.
+
+== What exists today
+
+The audit is short, because the current surface is small and deliberately so.
+
+[cols="1,2,3",options="header"]
+|===
+| Capability | Today | Consequence
+
+| Import
+| JSON only: `importBackup()` reads a `File`, rejects over 5 MB, parses, runs
+  `validateWorkspace()`, rejects if the result would exceed 200 assessments,
+  clones each assessment, appends `· imported` to its title, and marks the
+  decision `needsReview`.
+| Any other input — a spreadsheet register, a Visio drawing, a photographed
+  workshop wall — has no path in. The clone-and-rename behaviour also loses the
+  link to the source entirely.
+| Export
+| JSON only (`backup()`), one assessment or the whole workspace, via a Blob
+  download. Archived assessments export individually. `print` produces a PDF
+  through the browser.
+| Nothing machine-readable for a spreadsheet user, nothing graphical, nothing
+  for a document author.
+| Identity
+| Fresh `uid()` on import; the incoming ids are discarded.
+| Re-importing the same file duplicates everything. There is no update path.
+| Provenance
+| None beyond the title suffix.
+| "Where did this row come from?" is unanswerable six months later.
+| Validation
+| `validateWorkspace()` checks envelope shape and a size ceiling.
+| It does not check referential integrity (a `barrier.links` value may name a
+  threat that no longer exists).
+| Migration
+| `schemaVersion` is compared, but no migration is registered.
+| A version bump would strand existing backups.
+| Security posture
+| CSP `connect-src 'none'`; no network calls anywhere in the file.
+| This is an asset. Every design decision below must keep it.
+|===
+
+The pipeline below is the smallest architecture that turns that into "any
+reasonable input, one canonical model, any reasonable output" without giving up
+the local-first, no-egress property.
+
+== Target architecture
+
+The pipeline is a fixed sequence of stages with typed boundaries. Adapters touch
+only the edges of it, which is what makes the cost N+M rather than N×M.
+
+[cols="1,1,4",options="header"]
+|===
+| Stage | Input → Output | Responsibility
+
+| 1. Ingest
+| File/Blob/URL → `Source`
+| Size limits, declared filename and MIME, hash the bytes.
+| 2. Detect
+| `Source` → `Format`
+| Extension, magic bytes, container sniffing (zip central directory),
+  charset detection, and a confidence. Never trust the extension alone.
+| 3. Decode
+| `Source` → `Decoded`
+| Unzip, decode text (UTF-8/UTF-16/legacy codepage with a stated fallback),
+  rasterise PDF pages only when there is no text layer, run OCR when asked.
+| 4. Parse
+| `Decoded` → `Native`
+| Format-specific structure: workbook sheets and cells, OOXML paragraphs,
+  mxGraph cells, DOT statements, CSV records, TOC tree nodes.
+| 5. Map
+| `Native` → `BIM` (fragmentary)
+| The adapter's declared field mapping plus heuristics. Emits nodes, edges, and
+  a candidate list of unmapped fields.
+| 6. Reconcile
+| `BIM` → `BIM`
+| Deduplicate, match against the existing workspace, emit `same-as` edges with
+  scores; approximate matching happens here (and only here, plus search).
+| 7. Validate
+| `BIM` → `Validated`
+| Schema, then invariants I1–I14; each failure is named and waivable.
+| 8. Canonicalise
+| `Validated` → `Canonical`
+| RFC 8785, NFC, deterministic ordering, SHA-256.
+| 9. Commit
+| `Canonical` → `Revision`
+| Transactional apply to the workspace, with undo and a revision record.
+| 10. Project
+| `Canonical` → `View`
+| Bowtie view, causal view, table, report — the same data, different readings.
+| 11. Emit
+| `Canonical` → bytes
+| Writers: JSON, CSV, AsciiDoc, DOT, SVG, PNG, PDF, XLSX, OPML, XMI.
+|===
+
+Two rules make this enforceable:
+
+* *Adapters never touch the workspace.* They produce a BIM document (stage 5)
+  and hand it to the pipeline. The workspace is written in exactly one place,
+  stage 9.
+* *Every stage is observable.* The import preview is the output of stage 7, not
+  a re-implementation of it in the UI. What the user approves is what is
+  committed.
+
+=== Ports and adapters
+
+Hexagonal, with the existing architecture's vocabulary
+(`docs/architecture.adoc`: "Ports: clock, storage, import/export, identity and
+evidence retrieval").
+
+[source,text]
+----
+            ┌──────────── presence ────────────┐
+   bytes ──▶│ ingest → detect → decode → parse │──▶ Native
+            └──────────────────────────────────┘
+                            │ adapter.map
+                            ▼
+   ┌────────────────── kernel (pure) ──────────────────┐
+   │ map → reconcile → validate → canonicalise → commit │
+   └────────────────────────────────────────────────────┘
+                            │
+                            ▼
+                  BIM document ──▶ project ──▶ views ──▶ emit ──▶ bytes
+----
+
+The kernel is pure and testable in Bun without a DOM; presence adapters are
+browser-specific (File, Blob, Worker). This is the same split the README already
+uses for the policy kernel, and it keeps the domain testable without mocks.
+
+== The adapter contract
+
+Each adapter is a module plus a manifest. The manifest is data so that the UI can
+tell the truth before anything is imported.
+
+[source,json]
+----
+{
+  "id": "csv",
+  "version": "1.0.0",
+  "mediaTypes": ["text/csv", "text/tab-separated-values"],
+  "extensions": [".csv", ".tsv"],
+  "direction": "read",
+  "level": "L2",
+  "needs": ["text"],
+  "limits": { "bytes": 20000000, "records": 200000 },
+  "loss": [
+    { "field": "layout", "reason": "CSV carries no geometry", "recoverable": true },
+    { "field": "barrier.escalations", "reason": "flattened to one column unless --expand", "recoverable": true }
+  ],
+  "fixtures": ["fixtures/csv/register-minimal.csv", "fixtures/csv/register-full.csv"]
+}
+----
+
+Requirements on every adapter:
+
+. Declares its conformance level (L0–L3) and its loss list; the import summary
+  repeats both in plain language.
+. Never throws on malformed input without a location: "row 17, column
+  `severity`: expected a number" beats "invalid file".
+. Is fuzz-tested. Parsers are the most exposed code in the application.
+. Runs within the resource budget of stage 1; a 40 MB spreadsheets is refused,
+  not frozen on.
+
+== Format matrix
+
+Priority: P0 is the platform for everything else, P1 is the first useful wave.
+
+[cols="2,1,1,1,1,3",options="header"]
+|===
+| Format | Read | Write | Level | Priority | Notes
+
+| BIM JSON | yes | yes | L2 | P0 | Canonical. Replaces the current JSON as the
+  interchange format; the current file remains readable as a profile.
+| CSV/TSV | yes | yes | L2 | P1 | The format most risk registers
+  actually live in. Dialect sniffing (delimiter, quoting, header row, decimal
+  comma).
+| XLSX | yes | yes | L2 | P1 | Zip + OOXML. Read shared strings, sheet cells,
+  merged cells, and defined names. Write one sheet per projection.
+| AsciiDoc tables | yes | yes | L2 | P1 | Round-trip into the estate's own
+  documentation format.
+| PDF (text layer) | yes | no | L1 | P1 | pdf.js text extraction first; coordinates
+  give reading order and crude layout. No OCR needed when a text layer exists.
+| PDF/PNG/JPEG (scanned) | yes | no | L0 + OCR | P2 | See the OCR section.
+| DOCX | yes | no | L1 | P2 | Paragraphs, tables, styles. Mammoth-class
+  conversion to an intermediate HTML/paragraph tree.
+| DOT (Graphviz) | yes | yes | L2 | P2 | Edges, labels, and optionally layout
+  via `pos`.
+| draw.io / diagrams.net | yes | yes | L3 | P2 | mxGraph XML: cells, parent/child
+  containment, edge sources/targets, geometry. Strong external-editor round-trip.
+| Flying Logic (`.logic`) | yes | yes | L3 | P3 | Domain + entity + junctor model
+  maps almost one-to-one onto BIM node kinds and `gate`.
+| Mermaid | yes | yes | L1 | P3 | Flowchart and graph subsets only; state clearly
+  what is refused.
+| Visio (`.vsdx`) | yes | yes | L0/L1 | P3 | Zip + XML; shape text and connectors
+  are reachable, master geometry is not. Declared loss.
+| XMI 2.5 (UML/ArchiMate) | yes | yes | L1 | P4 | Only where a modelling tool is
+  the consumer.
+| OPML | no | yes | — | P4 | Outline export; matches Flying Logic's outline
+  output.
+| MS Project XML / MPXJ | no | yes | — | P4 | Where a TOC tree becomes a plan.
+| JSON-LD | yes | yes | L1 | P4 | Publication and vocabulary linking.
+| CBOR | yes | yes | L2 | P4 | Embedded and large documents.
+|===
+
+Deliberately *not* on the list: proprietary binary project files with no
+published schema, anything requiring a network service, and any format whose
+licence would infect the repository.
+
+== OCR capability
+
+=== Why it is in scope
+
+Bowtie work starts on paper: workshop walls, printed risk registers, scanned
+incident reports, photographs of whiteboards. If those cannot enter the model,
+the tool excludes the people who do the work. But OCR output is *evidence of a
+claim*, not a claim: it must be marked as such and be reviewable.
+
+=== Position in the design
+
+OCR is a *decode* strategy, not a separate pipeline. It produces `Decoded.text`
+plus per-block geometry, and stage 4 parses that exactly as it would parse an
+extracted text layer. Nothing downstream knows whether the characters came from
+a text layer or from pixels, except `provenance.method`, which says `ocr`.
+
+=== Order of attack
+
+. *Text layer first.* If `pdf.js` finds extractable text, use it. Never OCR a
+  digital PDF; it is slower and worse.
+. *Vector content first.* For PDF/SVG diagrams, extract shape text and arrows
+  from the drawing operators. This yields structure, not just words — a huge
+  advantage over raster OCR.
+. *Raster OCR last.* Tesseract-class engine, WASM, in a worker.
+. *Human review always.* OCR output lands in a review queue with confidence per
+  block; the import is not committed until accepted or explicitly accepted as
+  unverified.
+
+=== Engine and models
+
+* Engine: Tesseract.js (Apache-2.0), pinned by version and hash, run in a
+  Web Worker so the UI stays responsive.
+* Language data: `tessdata_fast` per language, typically 1–4 MB each. Bundled
+  offline for a first set (`eng`, `cym`, `fra`, `deu`, `spa`, `por`, `nld`,
+  `ita`, `pol`, `ron`, plus `osd` for script/orientation detection). Additional
+  languages are an explicit user download, never a silent fetch.
+* Pre-processing: deskew, denoise, binarise, and page-segmentation mode chosen
+  per input class (block for prose, sparse for forms, single-line for table
+  cells).
+* Table recovery: detect ruling lines and column gaps; if absent, use x-height
+  clustering and left-edge alignment. Emit a provisional table with per-cell
+  confidence, not a wall of text.
+
+=== Confidence and provenance
+
+Each recognised block carries: engine, engine version, model id, page,
+bounding box, mean confidence, and the raw text. Word-level boxes are kept for
+one revision so that the review UI can highlight.
+
+Invariant: *no OCR-derived node enters the workspace with `review.state =
+unreviewed`.* The commit stage refuses. (This is an addition to I10's
+requirements, recorded here because it is a pipeline rule, not an IR rule.)
+
+=== Human-in-the-loop UI
+
+* Side-by-side: page image with highlighted boxes on the left, editable rows on
+  the right.
+* Every row shows confidence; low-confidence runs are underlined, not hidden.
+* Corrections are recorded as `review: corrected`, and the correction is used to
+  improve a per-document confusion dictionary for the rest of that import (see
+  agrep).
+* Bulk actions: accept all above a threshold, accept page, reject page.
+* Keyboard: the whole flow must work without a pointer. Reviewing 200 rows with
+  a mouse is not a workflow; with `j`/`k`, `e` to edit, `Enter` to accept, it is.
+
+=== Budgets and limits
+
+[cols="2,1,3",options="header"]
+|===
+| Operation | Budget | Rationale
+
+| Text-layer extraction, 100 pages | 5 s | pdf.js is fast; anything slower is a
+  bug in our use of it.
+| OCR, A4 at 300 dpi, one language | 3 s | Mid-range laptop, one core.
+| OCR, 20 pages | 3 minutes, cancellable | Progress reported per page; cancel
+  must be immediate.
+| Memory ceiling | 512 MB | WASM heap plus page bitmaps; enforce and fail cleanly.
+| Page ceiling per import | 200 | Beyond this, split the document.
+|===
+
+=== Accuracy expectations, stated honestly
+
+Tesseract on clean 300 dpi print is typically 98–99% character accuracy; on a
+phone photo of a whiteboard written in marker it can be far worse, and on
+handwriting it is not fit for purpose. The proposal does not promise a number.
+It promises: confidence is visible, nothing is silently trusted, and the review
+step is fast enough that 98% is useful rather than dangerous.
+
+== Localisation capability
+
+Localisation is not "wrap the strings". Five layers, each with its own failure
+mode:
+
+[cols="1,2,3",options="header"]
+|===
+| Layer | Requirement | Failure it prevents
+
+| UI strings
+| Message catalogue keyed by stable id, ICU MessageFormat 2 syntax, plural and
+  ordinal categories from CLDR, no concatenation.
+| "1 file(s) imported" in languages with three plural forms.
+| Content
+| `LocalizedText` on every user-visible record; translation is data, not a
+  parallel document.
+| Two forks of the same assessment drifting apart.
+| Formatting
+| `Intl.*` for numbers, dates, durations, units, lists and relative time;
+  no hand-rolled formats.
+| `03/04/2026` meaning two different days.
+| Search and collation
+| Locale-aware collation (`Intl.Collator`), case folding, diacritic handling,
+  script-aware matching.
+| A Welsh user cannot find "Amlinelliad" by typing "amlinelliad".
+| Layout and input
+| RTL mirroring, bidi isolation for embedded identifiers, CJK line breaking,
+  IME composition safety, font fallback and subsetting.
+| Text that renders but cannot be read, or an editor that eats composition.
+|===
+
+=== Decisions
+
+* *Message format.* ICU MessageFormat 2 (recommended): standard, well-tooled,
+  and the platform already ships ICU for plurals and formatting. Fluent remains
+  a defensible alternative if the estate prefers its isolation model. Either way
+  the catalogue is data, one file per locale, and missing keys fail the build.
+* *Storage.* `LocalizedText` in the IR. The *default* locale is a document
+  property; translations are tagged. There is no "current language" in the data.
+* *Translation interchange.* XLIFF 2.0 in and out, with context notes and the
+  source hash so a translator can see what changed. This is how professional
+  translation is actually bought.
+* *Pseudo-locales in CI.* `en-XA` (accented, expanded) catches truncation;
+  `ar-XB` (bidi) catches mirroring. Both are generated, never hand-maintained.
+* *Content translation is not automatic.* Machine translation may be offered as
+  a suggestion with `provenance.method = suggested`, and is never silently
+  applied. Legal and safety text especially.
+
+=== Migration cost, stated
+
+The prototype's strings are inline in `index.html` and in template literals
+inside scripts. Extracting them is mechanical but not free: roughly 600–900
+strings, some embedded in HTML attributes and `aria-label` values. Estimate
+included in phase P4. Until extraction happens, the UI cannot be localised even
+if the data model can.
+
+[[agrep]]
+== Approximate matching (`agrep`)
+
+=== What is wanted
+
+`agrep` — approximate grep — answers "find this, allowing k mistakes". Three
+uses, one engine:
+
+. *Search.* Find a control when the user half-remembers its name.
+. *Reconciliation.* Decide whether row 17 of an import is the same entity as an
+  existing node.
+. *Quality.* Detect near-duplicate labels, inconsistent spellings, and OCR
+  damage ("Contro1" vs "Control").
+
+=== Semantics
+
+A small, well-specified query language, deliberately close to `agrep(1)`:
+
+[source,text]
+----
+agrep [-k N] [-i] [-w] [-v] [-c] [-n] [-l] [-F] [--field F] [--lang T] PATTERN
+----
+
+[cols="1,1,3",options="header"]
+|===
+| Flag | Meaning | Notes
+
+| `-k N` | at most N edits (insert/delete/substitute/transpose) | Default 0
+  (exact). `-k 1` on a 12-character word catches a single OCR slip.
+| `-i` | case-insensitive | Uses full Unicode case folding, not ASCII lowering.
+| `-w` | match whole words | Grapheme-aware boundaries.
+| `-F` | fixed string, not regex | Regex plus fuzziness needs a cost model;
+  enable only for patterns that compile to a bounded automaton.
+| `--field` | restrict to a BIM field | `label`, `text`, `fields.owner`, …
+| `--lang` | collation and folding rules | `cy-GB` folds `ŵ`; `de-DE` folds
+  `ß`/`ss` when asked, not by default.
+|===
+
+=== Implementation
+
+* *Normalisation pipeline:* NFC → case fold → optional diacritic strip →
+  optional transliteration (for cross-script matching) → tokenise on grapheme
+  clusters.
+* *Matching:* Myers bit-parallel for patterns up to 64 code points; a
+  Levenshtein automaton for longer patterns; both bounded by `k` and by a
+  maximum state count so a pathological pattern cannot hang the UI.
+* *Index:* trigram index over the normalised text corpus, rebuilt incrementally
+  on commit. For the sizes in scope (thousands of nodes) a linear scan is also
+  acceptable; the index matters for imports of 200k rows.
+* *Weighted distance for OCR:* not all substitutions are equal. A confusion
+  matrix (O/0, I/l/1, S/5, B/8, rn/m, cl/d, `£`/`E`) gives OCR-derived text a
+  cheaper path to the intended word than plain Levenshtein, and avoids the
+  false confidence of a uniform metric.
+* *Phonetic layer, optional:* Double Metaphone for personal and organisation
+  names in Latin script; never as the only matcher, and never for identifiers.
+
+=== Reconciliation policy
+
+* Exact id or alias → automatic match.
+* Normalised equal → automatic match, recorded with `method: normalised`.
+* `agrep -k 2` on label plus a same-kind check → *proposal*, never automatic.
+  Above 0.90 similarity it is pre-selected; below 0.75 it is not shown at all.
+* Anything a user accepts becomes a `same-as` edge with `method: agrep` and the
+  score. The xref survives, so the decision is auditable (I14).
+* Never merge across kinds. A threat is not the same entity as a consequence,
+  however similar the words.
+
+=== Limits
+
+Search must remain interactive at 200k nodes. Budgets: query plan under 50 ms
+for the index lookup; total under 200 ms; hard cap on candidates scored, with a
+"showing the best 200 of N" message rather than a freeze.
+
+== Security and resource limits
+
+Parsers are attack surface, and this application is used on documents from
+untrusted sources.
+
+[cols="2,3",options="header"]
+|===
+| Threat | Control
+
+| Zip bomb / XML bomb
+| Cap uncompressed bytes and entry count per archive; refuse nested archives
+  beyond depth 2; reject DTDs and external entities outright.
+| XXE / SSRF in XML
+| No DTD processing, no external entities, no schema fetching. All parsers are
+  offline.
+| Malicious SVG/HTML
+| Import as *data*, never as executable content. Sanitise on parse; render our
+  own DOM; never `innerHTML` imported markup.
+| CSV formula injection on export
+| Prefix cells beginning `=`, `+`, `-`, `@` with a tab or quote on XLSX/CSV
+  export, and document it.
+| Resource exhaustion
+| Per-stage byte/record/page/time budgets; a watchdog terminates the worker;
+  partial results are discarded, not half-committed.
+| Silently widened CSP
+| Any change to `connect-src`, `script-src`, or `worker-src` is a decision
+  recorded in this repository, not a side effect of adding a library.
+|===
+
+Note the CSP consequence of WASM and workers, because it is easy to miss: the
+prototype currently ships `default-src 'none'; script-src 'sha256-…';
+connect-src 'none'; img-src data:`. Running Tesseract in a worker needs
+`worker-src` and WebAssembly compilation needs `script-src 'wasm-unsafe-eval'`
+(or `'unsafe-eval'` on older engines). Fetching vendored model files needs
+`connect-src 'self'`. Each is defensible, none is invisible, and all three must
+be approved together with the OCR phase.
+
+== Import UX
+
+The pipeline's honesty is only useful if it is visible.
+
+* *Preview before commit.* What will be added, what will be merged, what will be
+  skipped, and why — the output of stage 7.
+* *Named failures.* File, locator, and a plain sentence. Never a modal that says
+  "invalid".
+* *Undo.* A committed import is one undoable transaction with a revision record.
+* *No partial surprise.* If 20% of rows fail validation, the user chooses:
+  import the valid ones (and see the rejected list), or fix the file. The
+  default is not "silently import 80%".
+* *Accessibility.* Keyboard-complete; an error summary with links to each
+  problem; no drag-and-drop-only path (a file input is always present); screen
+  reader announcements for progress, not just visual progress bars.
+
+== Testing strategy
+
+[cols="2,3",options="header"]
+|===
+| Layer | Approach
+
+| Fixtures
+| One directory per adapter with: minimal, full, malformed, and adversarial
+  files. Every fixture has an expected BIM document or an expected error.
+| Golden files
+| Canonical output compared byte-for-byte. Determinism makes this possible.
+| Round-trip
+| Property-based: generate a valid BIM document, write and read it, assert
+  semantic isomorphism (L2). Shrinking on failure is essential.
+| Invariants
+| A failing fixture per rule I1–I14, and one per waiver path.
+| Fuzzing
+| Every parser, via the existing `tests/fuzz/` seam, with a time budget.
+| OCR
+| A small fixed corpus with known text and accepted error bands; not a
+  vanity-accuracy benchmark.
+| i18n
+| Pseudo-locale rendering, missing-key build failure, bidi snapshots, plural
+  cases for languages with 4+ forms (`cy`, `ar`, `ru`, `pl`).
+| agrep
+| A truth table of (pattern, text, k, expected matches) including Unicode edge
+  cases: combining marks, emoji ZWJ sequences, Turkish dotted/dotless i.
+|===
+
+== Phases
+
+Effort is person-days for one experienced developer, including tests and
+documentation. It is an estimate, not a commitment.
+
+[cols="1,3,2,2,1",options="header"]
+|===
+| Phase | Deliverable | Acceptance | Depends on | Days
+
+| P0
+| BIM/1 reader and writer for the workspace profile; validator with I1–I14;
+  canonical serialisation; fixture set.
+| Existing exports import with all semantics intact and a stable hash; every
+  invariant has a failing fixture.
+| IR proposal accepted
+| 10
+| P1
+| CSV/TSV adapter with dialect sniffing; mapping UI with column-to-field
+  suggestions; agrep reconciliation proposals.
+| A real 200-row register imports with ≤5 manual corrections, and re-import
+  updates rather than duplicates.
+| P0
+| 12
+| P2
+| PDF text extraction; OCR with review queue; language packs for the first ten
+  languages.
+| A scanned two-page register becomes an editable table; no OCR node commits
+  unreviewed.
+| P0
+| 20
+| P3
+| XLSX read/write; AsciiDoc table read/write.
+| Two-way round-trip of a multi-sheet register at L2.
+| P1
+| 10
+| P4
+| String extraction; ICU MessageFormat catalogue; `Intl` formatting sweep;
+  pseudo-locales in CI; XLIFF round-trip.
+| UI runs in `en-GB` and `cy-GB` with zero hard-coded strings; pseudo-locale
+  build passes.
+| P0
+| 18
+| P5
+| Diagram adapters: DOT, draw.io; then Flying Logic.
+| L3 round-trip for draw.io on a representative file; DOT at L2.
+| P0, diagram engine
+| 15
+| P6
+| Export suite: CSV, XLSX, DOT, SVG, PNG, AsciiDoc, OPML; formula-injection
+  guard.
+| Every export has a golden file and an accessibility check for the document
+  outputs.
+| P3, P6 rendering
+| 12
+| P7
+| Search UI plus a CLI `agrep` over BIM, sharing the engine.
+| 200k-node query under 200 ms; CLI passes the shared truth table.
+| P1
+| 8
+|===
+
+Sequence: P0 → (P1, P4 in parallel) → (P2, P3) → P5 → P6 → P7. Phases P5 and
+P6 overlap the diagramming ultraplan; the diagram engine is a prerequisite for
+L3 adapters, not for export.
+
+== Metrics
+
+Track from the first release, because "works on my file" is not a metric.
+
+* Import success rate by format (parsed / attempted) and time to commit.
+* Manual corrections per 100 imported rows (the real quality measure).
+* Duplicate rate after re-import (target: zero for L2/L3 adapters).
+* OCR: characters corrected per 100, by source class (print, photo, scan).
+* Search: p50/p95 latency and zero-result rate.
+* i18n: missing keys, untranslated strings, and pseudo-locale overflows.
+
+== Risks
+
+[cols="2,1,4",options="header"]
+|===
+| Risk | Severity | Mitigation
+
+| Format churn in third-party tools
+| Medium
+| Declare a supported version range per adapter; fixture the versions actually
+  tested; fail loudly with the version in the message.
+| OCR quality promises outrunning reality
+| High
+| Confidence-first UX, mandatory review, no automatic commit, published corpus.
+| Parser vulnerabilities
+| High
+| No network, no eval, no external entities, fuzz coverage, size caps, and
+  dependency pinning with licence review.
+| Scope explosion from "support every format"
+| High
+| The priority column is the contract. P3/P4 formats require a decision to
+  start, not a request to add.
+| Localisation debt in the existing HTML
+| Medium
+| Phase P4 is explicit about extraction cost; do not claim i18n before it lands.
+| Silent semantic drift between adapters
+| Medium
+| One IR, one validator, golden files, and round-trip properties. No adapter may
+  post-process after validation.
+|===
+
+== Decisions requested
+
+[cols="1,4",options="header"]
+|===
+| # | Decision
+
+| E1 | Approve BIM/1 as the single interchange target, with adapters at the edge.
+| E2 | Approve the pipeline stages and the rule that adapters never write the
+  workspace directly.
+| E3 | Approve OCR as an in-browser, offline, review-required capability, and the
+  associated CSP changes as one decision.
+| E4 | Choose the message format (ICU MF2 recommended) and approve XLIFF 2.0 as
+  the translation interchange.
+| E5 | Approve `agrep` semantics (flags, defaults, thresholds) as a shared engine
+  for search, reconciliation and quality checks.
+| E6 | Approve the dependency policy: vendored, hash-pinned, licence-recorded;
+  no package manager artefact committed.
+| E7 | Approve the phase order and the P1 acceptance test (real register, ≤5
+  corrections, re-import updates).
+|===
