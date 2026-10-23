@@ -1,0 +1,285 @@
+{
+  "ir": "bim/1",
+  "document": {
+    "id": "urn:uuid:0192f1a0-7c00-7a3e-9f4e-6d1c0b2a9e11",
+    "created": "2026-10-23T09:12:00Z",
+    "modified": "2026-10-23T09:12:00Z",
+    "revision": 7,
+    "generator": { "name": "bowtie-workbench", "version": "0.2.0-proposal" },
+    "profiles": ["bowtie/workspace-v1"],
+    "locale": { "default": "en-GB", "available": ["en-GB", "cy-GB"] },
+    "policy": {
+      "appetiteStatement": {
+        "default": "Harm to people is tolerable only where it is unlikely, bounded and recoverable; disruption beyond thirty minutes is not accepted without a working fallback.",
+        "translations": {
+          "cy-GB": "Ni chaniateir niwed i bobl ond lle mae'n annhebygol, yn gyfyngedig ac yn adferadwy."
+        }
+      },
+      "likelihoodLabels": [
+        { "default": "L1 — fewer than 0.01 events per service-year" },
+        { "default": "L2 — 0.01 to under 0.1 events per service-year" },
+        { "default": "L3 — 0.1 to under 1 event per service-year" },
+        { "default": "L4 — 1 to under 10 events per service-year" },
+        { "default": "L5 — 10 or more events per service-year" }
+      ],
+      "decision": {
+        "choice": "Not decided",
+        "authority": "Example service owner",
+        "needsReview": true
+      }
+    },
+    "graphs": [
+      {
+        "id": "g-bowtie-1",
+        "kind": "bowtie",
+        "title": {
+          "default": "Essential service continuity",
+          "translations": { "cy-GB": "Parhad y gwasanaeth hanfodol" }
+        },
+        "meta": {
+          "objective": { "default": "Keep a support service available, accessible and dependable." },
+          "scope": { "default": "A fictional service and its delivery partners. Illustrative inputs only." },
+          "horizon": "P12M",
+          "basis": "frequency",
+          "unit": "1/a"
+        },
+        "nodes": [
+          {
+            "id": "n-hazard",
+            "kind": "hazard",
+            "label": { "default": "Dependence on a shared digital service for time-sensitive support" },
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:00:00Z" }
+          },
+          {
+            "id": "n-top",
+            "kind": "top-event",
+            "label": { "default": "The essential service is unavailable for more than 30 minutes" },
+            "fields": { "observable": true, "threshold": { "value": 30, "unit": "min" } },
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:01:00Z" }
+          },
+          {
+            "id": "n-threat-routing",
+            "kind": "threat",
+            "label": { "default": "A change breaks request routing" },
+            "text": { "default": "An incompatible configuration reaches the live service." },
+            "confidence": { "scheme": "fuzzy", "value": 0.6, "basis": "Change history, 2025–2026" },
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:05:00Z" }
+          },
+          {
+            "id": "n-threat-power",
+            "kind": "threat",
+            "label": { "default": "Shared power is lost" },
+            "text": { "default": "Both nominally separate service instances lose the same supply." },
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:06:00Z" }
+          },
+          {
+            "id": "n-event-1",
+            "kind": "intermediate-event",
+            "label": { "default": "Alternative route cannot meet urgent demand" },
+            "fields": { "gate": "and" },
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:20:00Z" }
+          },
+          {
+            "id": "n-cons-people",
+            "kind": "consequence",
+            "label": { "default": "People miss time-sensitive support" },
+            "text": { "default": "People with urgent needs, and people unable to use a digital fallback, do not receive timely help." },
+            "fields": {
+              "categories": ["physical", "mental", "access", "service"],
+              "onset": { "default": "Within hours" },
+              "duration": { "default": "Hours to lasting harm" },
+              "reversibility": "partial",
+              "estimates": {
+                "inherent": { "likelihood": "L4", "severity": 4, "confidence": "medium" },
+                "residual": { "likelihood": null, "severity": null, "confidence": "unknown" },
+                "target": { "likelihood": "L2", "severity": 3, "confidence": "low" }
+              }
+            },
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:30:00Z" }
+          },
+          {
+            "id": "n-cons-records",
+            "kind": "consequence",
+            "label": { "default": "Unrecoverable records disrupt later decisions" },
+            "text": { "default": "Missing records lead to repeat work, delayed decisions and loss of remedy." },
+            "fields": { "categories": ["information", "rights", "financial"], "reversibility": "unknown" },
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:31:00Z" }
+          },
+          {
+            "id": "n-barrier-test",
+            "kind": "barrier",
+            "label": { "default": "Test and stage each change" },
+            "fields": {
+              "side": "prevention",
+              "status": "verified",
+              "owner": "Change owner",
+              "type": "Engineering / design",
+              "standard": { "default": "A representative routing test must pass before release." },
+              "test": { "default": "Exercise an incompatible configuration in a separate test environment." },
+              "lastTest": "2026-09-18",
+              "due": "2027-03-18",
+              "critical": true
+            },
+            "evidence": [
+              { "uri": "https://example.invalid/evidence/change-test-2026-09.pdf", "label": "Test record, September 2026" }
+            ],
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:40:00Z" }
+          },
+          {
+            "id": "n-barrier-fallback",
+            "kind": "barrier",
+            "label": { "default": "Activate an accessible staffed fallback" },
+            "fields": {
+              "side": "mitigation",
+              "status": "degraded",
+              "owner": "Service lead",
+              "type": "Administrative",
+              "standard": { "default": "Activate within the declared recovery time and accommodate access needs." },
+              "critical": true
+            },
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:41:00Z" }
+          },
+          {
+            "id": "n-escalation-demand",
+            "kind": "escalation",
+            "label": { "default": "Demand exceeds trained staff capacity during a widespread outage" },
+            "fields": {
+              "control": { "default": "Rehearse surge cover and maintain an independent contact rota." },
+              "owner": "Service lead"
+            },
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:42:00Z" }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e-threat-routing-top",
+            "kind": "contributes",
+            "from": "n-threat-routing",
+            "to": "n-top",
+            "gate": "or",
+            "condition": { "default": "A faulty change is not stopped or rolled back." },
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:10:00Z" }
+          },
+          {
+            "id": "e-threat-power-top",
+            "kind": "contributes",
+            "from": "n-threat-power",
+            "to": "n-top",
+            "gate": "or",
+            "condition": { "default": "Independent supply is unavailable." },
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:11:00Z" }
+          },
+          {
+            "id": "e-top-event1",
+            "kind": "contributes",
+            "from": "n-top",
+            "to": "n-event-1",
+            "gate": "none",
+            "condition": { "default": "The outage lasts beyond the recovery objective." },
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:12:00Z" }
+          },
+          {
+            "id": "e-event1-people",
+            "kind": "contributes",
+            "from": "n-event-1",
+            "to": "n-cons-people",
+            "gate": "and",
+            "condition": { "default": "A person has a time-sensitive need." },
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:13:00Z" }
+          },
+          {
+            "id": "e-top-records",
+            "kind": "contributes",
+            "from": "n-top",
+            "to": "n-cons-records",
+            "gate": "none",
+            "condition": { "default": "Records are lost and cannot be reconciled." },
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:14:00Z" }
+          },
+          {
+            "id": "e-barrier-test",
+            "kind": "inhibits",
+            "from": "n-barrier-test",
+            "to": "n-threat-routing",
+            "gate": "none",
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:43:00Z" }
+          },
+          {
+            "id": "e-barrier-fallback",
+            "kind": "inhibits",
+            "from": "n-barrier-fallback",
+            "to": "n-cons-people",
+            "gate": "none",
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:44:00Z" }
+          },
+          {
+            "id": "e-escalation-weakens",
+            "kind": "weakens",
+            "from": "n-escalation-demand",
+            "to": "n-barrier-fallback",
+            "gate": "none",
+            "condition": { "default": "Surge cover depends on the same staff who are themselves affected." },
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:45:00Z" }
+          },
+          {
+            "id": "e-shared-dependency-power",
+            "kind": "shared-dependency",
+            "from": "n-threat-power",
+            "to": "n-barrier-fallback",
+            "gate": "none",
+            "condition": { "default": "The fallback runs on the same power path as the primary service." },
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:46:00Z" }
+          }
+        ],
+        "annotations": [
+          {
+            "id": "a-1",
+            "target": "n-cons-people",
+            "text": { "default": "Averages conceal severe but infrequent outcomes; keep this scenario separate." },
+            "provenance": { "method": "manual", "captured": "2026-10-01T10:50:00Z" }
+          }
+        ]
+      }
+    ],
+    "revisions": [
+      {
+        "id": "r-1",
+        "at": "2026-10-01T11:00:00Z",
+        "note": { "default": "Initial review after the recovery exercise." }
+      }
+    ]
+  },
+  "layout": {
+    "g-bowtie-1": {
+      "version": 1,
+      "nodes": {
+        "n-threat-routing": { "x": 0, "y": 0, "w": 180, "h": 72 },
+        "n-threat-power": { "x": 0, "y": 120, "w": 180, "h": 72 },
+        "n-top": { "x": 240, "y": 60, "w": 200, "h": 88 },
+        "n-event-1": { "x": 500, "y": 60, "w": 180, "h": 72 },
+        "n-cons-people": { "x": 740, "y": 0, "w": 200, "h": 96 },
+        "n-cons-records": { "x": 740, "y": 140, "w": 200, "h": 96 }
+      },
+      "edges": {
+        "e-threat-routing-top": { "routing": "orthogonal", "points": [[180, 36], [240, 104]] },
+        "e-threat-power-top": { "routing": "orthogonal", "points": [[180, 156], [240, 104]] }
+      },
+      "viewport": { "zoom": 1, "pan": [0, 0] },
+      "theme": "default"
+    }
+  },
+  "resources": [
+    {
+      "id": "ev-test-record",
+      "kind": "document",
+      "uri": "https://example.invalid/evidence/change-test-2026-09.pdf",
+      "mediaType": "application/pdf"
+    }
+  ],
+  "provenance": {
+    "adapter": "workspace-json@1.0.0",
+    "method": "declared",
+    "source": { "name": "bowtie-workspace-2026-10-01.json" },
+    "captured": "2026-10-23T09:12:00Z"
+  }
+}

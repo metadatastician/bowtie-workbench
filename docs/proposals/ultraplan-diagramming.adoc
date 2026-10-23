@@ -1,0 +1,741 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= Ultraplan: assimilating the diagramming capability of Visual Paradigm and Flying Logic
+:toc:
+:toclevels: 3
+
+== Purpose
+
+The workbench already has a bowtie *page*: a three-column layout, a list of
+threats and consequences, and buttons. It does not have a diagram *editor*. That
+is the gap this plan closes.
+
+Two mature products bracket what is needed:
+
+* *Flying Logic* is the closest thing in existence to the workbench's reasoning
+  core. It is a graph of causes and effects with AND/OR junctors, fuzzy
+  confidence that propagates, groups that collapse, and a layout engine that
+  takes full responsibility for arrangement so the thinker can keep thinking.
+* *Visual Paradigm* is the reference for the *editor* around the model: model and
+  view separated, a project browser, containers and layers, alignment guides,
+  connector routing, traceability, and template-driven document generation.
+
+The aim is not to clone either. It is to absorb what they establish as necessary
+and refuse what would turn a risk workbench into a general CASE tool.
+
+=== Scope discipline
+
+[cols="1,2,4",options="header"]
+|===
+| Stance | Meaning | Example
+
+| Adopt
+| Absent today and required for credible use.
+| Undo/redo, auto-layout, connector routing, keyboard editing.
+| Adapt
+| Present in another form; keep our semantics.
+| Flying Logic's user-defined attributes become typed `fields` in BIM.
+| Defer
+| Valuable but not on the critical path; revisit with evidence.
+| Full XMI fidelity, resource levelling, team server.
+| Reject
+| Would distort the product or the evidence model.
+| 100+ notations; code round-trip; cloud-only collaboration; AI-generated risk
+  claims without provenance.
+|===
+
+== Method and sources
+
+Capabilities were read from the vendors' own user documentation on 2026-10-23
+(Flying Logic documentation and user guide; Visual Paradigm user's guide,
+feature comparison and Doc. Composer material). Each row is a capability the
+vendor documents, not an inference. This is an inventory of *what users can do*,
+not a feature-count contest; the fit column is the point.
+
+Effort is person-days for one experienced developer including tests and docs. It
+is an estimate with real uncertainty, stated so that it can be argued with.
+
+== Part 1 — Flying Logic capability inventory
+
+[cols="1,3,1,3",options="header"]
+|===
+| ID | Capability | Fit | Note
+
+| FL-01
+| Graph of *entities*, *edges*, *junctors*, *groups*
+| Adopt
+| Matches BIM: nodes, edges with `gate`, groups.
+| FL-02
+| Entity has title, long annotation, class, symbol
+| Adopt
+| `label`, `text`, `kind`, icon.
+| FL-03
+| Entity classes grouped into *domains*; five built-ins; custom domains and
+  classes with stable hidden ids; export/import a domain file
+| Adapt
+| Becomes *notation packs* / *method packs*, versioned and shareable.
+| FL-04
+| Entity classes are visual, not constraints ("Flying Logic does not restrict
+  connections by class")
+| Adapt
+| We do constrain where the method requires it (a barrier must act on a path),
+  and say so as an invariant.
+| FL-05
+| Junctors carrying an operator, inserted on an edge
+| Adopt
+| Modelled as `gate` on the incoming edge set; no separate glyph required in
+  the data.
+| FL-06
+| Operators: Fuzzy AND (min), Fuzzy OR (max), XOR, Proportional, Sum, Product
+| Adopt
+| First three map to `and`/`or`/`xor`; the arithmetic operators are a later,
+  explicit extension with units and semantics.
+| FL-07
+| Entity operator (all entities) and default junctor operator
+| Adopt
+| Graph-level defaults in `meta`, overridable per node.
+| FL-08
+| Confidence spinners: drivers editable, driven computed, true/false/
+  indeterminate, 5% increments, key shortcuts
+| Adopt
+| This is the single best interaction idea in the product. Keyboard parity is
+  mandatory; a spinner that only works by drag is not accessible.
+| FL-09
+| Edge weights, including negative weights (fuzzy NOT)
+| Adopt
+| `weight` in BIM, already specified.
+| FL-10
+| Fuzzy boolean versus floating point distinction, with distinct arrowheads
+| Adapt
+| Keep the distinction in the data; render it with a label as well as an
+  arrowhead, never shape or colour alone.
+| FL-11
+| Orientation switch (bottom-to-top, left-to-right)
+| Adopt
+| Layout parameter, not a data property.
+| FL-12
+| Automatic layout with animated transitions that preserve the mental map
+| Adopt
+| The animation is not decoration; it is how a user keeps their place when the
+  engine reflows. Must respect `prefers-reduced-motion`.
+| FL-13
+| Groups: open, collapsed, hoisted (drill-down)
+| Adopt
+| Collapse and hoist are essential for the S&T tree scale case.
+| FL-14
+| DropZones for precise insertion (predecessor, successor, on-edge, insert)
+| Adapt
+| Excellent pointer affordance; must have keyboard equivalents.
+| FL-15
+| Quick Capture: type titles, Enter, repeated
+| Adopt
+| Fast capture is how workshops actually produce content.
+| FL-16
+| New Entities from List on Clipboard, stripping bullet prefixes
+| Adopt
+| Cheapest possible import path; pairs with CSV import.
+| FL-17
+| Add Entity as Successor switch; insert entity along an existing edge
+| Adopt
+| "Insert on edge and rewire" is the core graph-editing gesture.
+| FL-18
+| Durable Entity IDs, visible and renumberable
+| Adapt
+| We already have stable ids; expose them read-only, with a renumber tool for
+  imported corpora only.
+| FL-19
+| Ephemeral annotation numbers, matched to an annotations export
+| Adapt
+| Use the same idea for review packets, but derive numbers, never store them.
+| FL-20
+| Edge annotations toggle; back edges
+| Adopt
+| Condition text on edges; feedback edges are already in BIM.
+| FL-21
+| Rich annotation text attributes; auto font sizing; maximum width multiple
+| Adopt
+| Typography as layout input, not a stylesheet afterthought.
+| FL-22
+| Custom symbols from SVG/PNG/GIF/JPEG, cropped and embedded in the document
+| Adopt
+| Symbols travel with the document; no broken references.
+| FL-23
+| User-defined attributes on elements, usable by scripting and export
+| Adapt
+| Typed `fields` in BIM; untyped user attributes become an `extensions`
+  namespace.
+| FL-24
+| Method domains: Effects-Based Planning, Evidence-Based Analysis, Conflict
+  Resolution, Prerequisite Tree
+| Adopt
+| These become method packs with vocabulary and validation.
+| FL-25
+| Thinking-process trees: CRT, FRT, Evaporating Cloud, Prerequisite Tree,
+  Transition Tree, Strategy and Tactics Tree, Goal Tree, Decision Tree, Core
+  Problem Tree, Objective Tree
+| Adopt
+| A differentiator: the workbench should host these as first-class methods, not
+  as freeform drawings.
+| FL-26
+| Driver/driven distinction and "eligible action" states
+| Adopt
+| Directly useful: an action whose necessary conditions are unmet is visibly
+  ineligible.
+| FL-27
+| Categories of Legitimate Reservation as a review discipline
+| Adopt
+| Becomes a review checklist attached to edges and nodes (`reservation` nodes),
+  with the five categories as a structured form.
+| FL-28
+| Evidence-Based Analysis (belief-network and probabilistic operator sets)
+| Defer
+| Only with an explicit uncertainty model and validation; do not ship numbers
+  that look like probabilities and are not.
+| FL-29
+| Outline view and export to OPML
+| Adopt
+| An outline is the accessible twin of the canvas; export for other tools.
+| FL-30
+| Export to PDF, JPEG, PNG
+| Adopt
+| Already partly present via print; needs a real vector path.
+| FL-31
+| Export to Graphviz DOT
+| Adopt
+| Cheap, high value, and an escape hatch for layout experimentation.
+| FL-32
+| Export to MS Project XML and MPX; milestone and resource fields on entities
+| Defer
+| Planning integration is a product of its own; keep the fields, skip the
+  scheduler.
+| FL-33
+| XSLT / Concerto export hooks
+| Reject
+| Superseded by a documented template mechanism of our own.
+| FL-34
+| Scripting API over documents
+| Defer
+| A stable IR plus a CLI gives most of the value with none of the sandbox risk.
+| FL-35
+| Project-management view of a tree as a plan
+| Defer
+| See FL-32.
+|===
+
+== Part 2 — Visual Paradigm capability inventory
+
+[cols="1,3,1,3",options="header"]
+|===
+| ID | Capability | Fit | Note
+
+| VP-01
+| Model elements separate from shapes; one element shown in many diagrams
+  ("context-based modelling")
+| Adopt
+| The single most important architectural idea in this list. Our BIM node is the
+  model; a shape is a view of it.
+| VP-02
+| Project browser / model explorer / diagram navigator
+| Adopt
+| Becomes the workspace tree: documents, graphs, views, resources.
+| VP-03
+| 100+ diagram types spanning UML, BPMN, ArchiMate, ERD, DFD, SysML, CMMN, BMM,
+  mind map, PERT, WBS, value stream, customer journey, wireframe, fault tree,
+  fishbone, SIPOC
+| Reject
+| Not our product. We support the methods that reason about harm and control,
+  and we import/export the rest.
+| VP-04
+| Fault Tree Analysis notation with AND/OR gates
+| Adopt
+| Overlaps the bowtie's causal chain; one notation pack, not a new engine.
+| VP-05
+| Grid diagram: spreadsheet-style editing of model elements with configurable
+  columns, filtering and search
+| Adopt
+| The accessible, bulk-edit twin of the canvas. High value, low cost.
+| VP-06
+| ETL tables and glossary grids
+| Adapt
+| A "table view" over any query, with editable cells and CSV export.
+| VP-07
+| Resource-centric modelling with smart magnets for connecting shapes
+| Adopt
+| Connection gestures that never require hitting a 2-pixel handle.
+| VP-08
+| Alignment guides and align/distribute commands
+| Adopt
+| Manual layout still happens; make it pleasant.
+| VP-09
+| Automatic diagram layout ("smart sweeper")
+| Adopt
+| Shared with FL-12; one engine, several entry points.
+| VP-10
+| Fit shape size to content
+| Adopt
+| Cheap and constantly needed.
+| VP-11
+| Connector waypoints, pinning ends, reverse direction, connection point style
+| Adopt
+| Routing is a user decision, not only an algorithm's.
+| VP-12
+| Containers: pools, lanes, groups, sub-diagrams
+| Adopt
+| Bowtie needs wings and scenario bands; TOC needs step groups.
+| VP-13
+| Layers with visibility, and layer filters in document output
+| Adopt
+| Annotation layer, evidence layer, assumptions layer, review layer.
+| VP-14
+| Styles, format copier, themes
+| Adapt
+| A small token set, not a full CSS-like style language. Accessibility first.
+| VP-15
+| Spell checker
+| Adapt
+| Offline dictionary plus a locale-aware word list; never a network service.
+| VP-16
+| Model indicator icons (has description, sub-diagram, references, auxiliary
+  view)
+| Adopt
+| At-a-glance completeness cues; pairs with our evidence rules.
+| VP-17
+| Jump to element/diagram by name; bookmarks
+| Adopt
+| Navigation at scale. Pairs with the agrep engine for fuzzy jump.
+| VP-18
+| Zoom to region; overview diagram / minimap
+| Adopt
+| The prototype's bowtie page already overflows on narrow screens.
+| VP-19
+| Diagram layers and model-level documentation in one place
+| Adopt
+| See VP-13 and VP-30.
+| VP-20
+| Doc. Composer: template-driven document generation from the model; element
+  templates; loops over elements and connectors; layer filters
+| Adapt
+| Genuinely valuable, and the estate already writes AsciiDoc. Implement a small
+  declarative template over BIM, not an XML programming language.
+| VP-21
+| Fill-in Doc: inject model content into a Word document
+| Reject
+| No Word round-trip. Export AsciiDoc/PDF; accept DOCX only as an import.
+| VP-22
+| Export to HTML, PDF, Word; publish to web
+| Adopt
+| HTML and PDF; Word is a projection of the HTML one.
+| VP-23
+| Traceability between model elements; impact analysis
+| Adopt
+| Bowtie already needs it: consequence to obligation to decision to evidence.
+  Make it a query, not a feature bolted on.
+| VP-24
+| Glossary with terms, aliases, definitions; term highlighting in documents
+| Adopt
+| Directly serves localisation and consistent language across assessments.
+| VP-25
+| Custom properties / tagged values / stereotypes
+| Adapt
+| Typed `fields` and method packs; no open-ended stereotype engine.
+| VP-26
+| Syntax validation and model quality checks
+| Adopt
+| This is BIM's invariant list, surfaced per element with a jump-to-problem.
+| VP-27
+| Cross-references and hyperlinks between diagrams and elements
+| Adopt
+| `linked-assessment` and `contains` edges already exist in BIM.
+| VP-28
+| Undo/redo across structural edits
+| Adopt
+| Non-negotiable for direct manipulation.
+| VP-29
+| Multi-tab diagrams, full screen, panes
+| Adopt
+| Tabs per graph; panes for outline, inspector, problems.
+| VP-30
+| Code engineering and round-trip (model to source)
+| Reject
+| Out of scope; a distraction from the evidence model.
+| VP-31
+| Teamwork server, branching/merging of projects, review comments
+| Defer
+| Local-first with revision diff and merge first; a server only with a real
+  multi-user requirement.
+| VP-32
+| XMI import/export
+| Defer
+| A writer only, for consumers that require it; partial reader at best.
+| VP-33
+| Wireframe, customer journey, value stream and other business notations
+| Reject
+| Different product. Import as freeform if a file arrives; do not maintain the
+  notation.
+| VP-34
+| Mind mapping and brainstorm diagrams
+| Adapt
+| The capture use case (FL-15/FL-16) covers it without a new notation.
+| VP-35
+| AI diagram generation
+| Reject as currently framed
+| A suggestion with provenance may be offered later; generated risk claims are
+  not acceptable as evidence.
+|===
+
+== Part 3 — What the fit map implies
+
+Three architectural commitments follow from the Adopt rows.
+
+=== 1. Model and view are separate
+
+A `Node` in BIM may appear in several views (bowtie, causal chain, table,
+outline, report). Deleting a shape must not delete a node; deleting a node must
+warn about every view that shows it. This is VP-01 and it is the difference
+between a drawing tool and a model tool.
+
+=== 2. One layout engine, many entry points
+
+Auto-layout is used by: first open, "tidy", incremental edit, animation between
+states, export to a fixed canvas, and the minimap. It must therefore be
+deterministic, incremental, and interruptible — not a batch script invoked once.
+
+=== 3. The keyboard path is the primary path
+
+The prototype's existing strength is that no drag, hover or gesture is required.
+Every capability above must survive translation into keystrokes, and the canvas
+must have a text-equivalent table view that is not a consolation prize. This is
+also what makes the difference between a tool that disabled users can use and
+one that claims to be accessible.
+
+== Part 4 — Target architecture
+
+=== 4.1 Layers
+
+[cols="1,2,4",options="header"]
+|===
+| Layer | Owns | Rule
+
+| Document
+| BIM/1 semantics
+| No geometry, no styling.
+| Sheet
+| Layout overlay per graph
+| Discardable. Regenerable by layout.
+| View
+| Projection (bowtie, tree, table, outline, report)
+| Read-only over the sheet; selects, never mutates semantics.
+| Editor
+| Selection, tools, commands, undo
+| Every mutation is a command object.
+| Renderer
+| SVG scene
+| No business rules.
+|===
+
+=== 4.2 Scene and hit-testing
+
+* `SceneNode` tree mirroring groups; each view node carries `modelId` and a
+  geometry box.
+* Spatial index (uniform grid at small scale, R-tree above ~2k elements) for
+  hit-testing and marquee selection.
+* Z-order by layer, then by group depth, then explicit index.
+* Hit-test priority: ports, edge, node body, group, background — with a
+  configurable tolerance in CSS pixels, not model units.
+
+=== 4.3 Commands and undo
+
+[source,text]
+----
+Command = { id, label, apply(state) -> Patch, invert(Patch) -> Patch }
+----
+
+* All mutations flow through `dispatch(command)`.
+* Drags coalesce into one command with a transaction id.
+* Imports are one command (all or nothing at commit).
+* Undo stack keeps patches plus periodic snapshots for bounded memory; a
+  checkpoint is a named marker in the same stack.
+* Undo is per-user and per-session; the document's `revisions` list is the
+  durable history. Do not confuse the two.
+
+=== 4.4 Layout engine
+
+* *Cycle breaking* by DFS with a feedback-edge preference (BIM already requires
+  feedback edges to carry a lag, which gives the breaker a signal).
+* *Layering*: longest-path, then tighten with a network simplex pass for
+  compactness.
+* *Ordering*: median/barycenter with a transpose pass to reduce crossings.
+* *Coordinates*: Brandes–Köpf for straightness with balanced aspect ratio; node
+  size variation handled as port constraints.
+* *Bowtie specialisation*: a two-wing constraint — prevention wing upstream of
+  the top event, mitigation downstream — so the canonical shape emerges rather
+  than being imposed.
+* *Incremental mode*: pin user-positioned nodes, reflow the rest, minimise
+  displacement; animate the delta.
+* *Determinism*: same input, same output, byte-for-byte in the layout overlay.
+  This is testable and makes golden files possible.
+
+Quality metrics, measured on every change and in CI benchmarks: edge crossings,
+edge bends, total edge length, node overlap (must be zero), label overlap, aspect
+ratio, and displacement from the previous layout.
+
+=== 4.5 Routing and labels
+
+* Orthogonal A* around node obstacles with a cost for bends and shared runs.
+* Straight lines for short hops; curved only where it aids reading.
+* Port assignment by angle to reduce crossings; ports snap to a grid of 3 per
+  side by default.
+* Label placement: candidate positions scored for overlap and distance; labels
+  move with the edge and stay horizontal regardless of edge direction.
+* Shared dependencies render as a distinct run with a label, never as two
+  coincident lines.
+
+=== 4.6 Notation packs and method packs
+
+A notation pack is data:
+
+[source,json]
+----
+{
+  "id": "bowtie",
+  "version": "1.0.0",
+  "kinds": {
+    "hazard":    { "shape": "hexagon",  "ports": "auto", "size": [160, 88] },
+    "top-event": { "shape": "circle",   "ports": "auto", "size": [200, 200] },
+    "barrier":   { "shape": "barrier",  "ports": ["in", "out"], "size": [180, 72] }
+  },
+  "constraints": [
+    { "rule": "barrier.mustLinkToPath", "message": "A control must act on a threat or consequence." }
+  ],
+  "layout": { "orientation": "left-to-right", "engine": "layered+bowtie" },
+  "palette": ["hazard", "top-event", "threat", "consequence", "barrier", "escalation"]
+}
+----
+
+A method pack adds vocabulary, invariants, defaults, report templates and a
+review checklist (for example the Categories of Legitimate Reservation). This is
+how Flying Logic's domains and Visual Paradigm's profiles both collapse into one
+mechanism.
+
+=== 4.7 Interaction
+
+* Pointer and keyboard are peers. Every pointer gesture has a command and a
+  shortcut; every shortcut is discoverable from a command palette.
+* Modes: select, connect, annotate. Modal tools are visible and dismissible,
+  never silent.
+* Drop zones (FL-14) for insertion; keyboard insertion via "insert before /
+  after / child" commands.
+* In-canvas editing with IME safety: composition events must not commit a node
+  rename on every keystroke.
+* Drag threshold and cancel; no action on hover alone.
+
+=== 4.8 Accessibility as a spec, not an aspiration
+
+* Target WCAG 2.2 AA, as the README already states for the prototype.
+* Focus model: roving tabindex across nodes in reading order, edge focus via a
+  dedicated mode, group focus with expansion.
+* The accessible tree mirrors the graph: groups as groups, edges as a list under
+  their source with "connects to" text.
+* Live regions announce structural changes ("Control added after Threat 3").
+* Every diagram has a table equivalent generated from the same projection; the
+  table is editable where the canvas is.
+* Colour never carries meaning alone: gates, confidence, and barrier status all
+  have text or symbol equivalents.
+* Motion: respect reduced-motion; layout changes become instant with an optional
+  summary announcement.
+
+=== 4.9 Rendering and export
+
+* SVG is the primary renderer: selectable text, printable, accessible, and
+  diffable. A canvas fallback is permitted above ~5k elements with an SVG/table
+  export path preserved.
+* Self-contained SVG export embeds fonts as outlines or subset WOFF, and embeds
+  symbol images as data URIs.
+* PNG, PDF generated from the same scene, so what is exported is what is seen.
+* DOT export for analysis; a "layout debug" export for support.
+
+=== 4.10 Collaboration, diff and merge
+
+* Local-first. A document is a file.
+* Revision comparison is a BIM diff (semantic), rendered as a change list plus a
+  highlighted diagram — this is VP-23's impact analysis applied to time.
+* Three-way merge at the node and edge level, with conflicts presented as
+  choices, never auto-resolved for semantics.
+* CRDT or server sync is deliberately out of scope until a requirement exists;
+  the IR makes it possible later without redesign.
+
+=== 4.11 Performance budgets
+
+[cols="2,1,3",options="header"]
+|===
+| Operation | Budget | Notes
+
+| Open a 1,000-node document
+| 1.5 s
+| Includes layout if no overlay exists.
+| Pan/zoom
+| 60 fps at 1,000 nodes
+| SVG + transforms; avoid re-layout.
+| Incremental layout after an edit
+| 500 ms at 1,000 nodes
+| Animated; must be interruptible.
+| Full layout
+| 2 s at 1,000 nodes
+| Above that, offer a progress state.
+| Search (agrep)
+| 200 ms at 200k nodes
+| Shared engine with the import pipeline.
+| Memory
+| under 200 MB at 5,000 nodes
+| Scene + index + undo snapshots.
+|===
+
+== Part 5 — Work breakdown
+
+Phase D0 is a prerequisite for everything else. D1 and D2 can proceed in
+parallel with one developer each. Figures are person-days.
+
+[cols="1,3,2,1",options="header"]
+|===
+| Phase | Deliverables | Acceptance | Days
+
+| D0 — Foundations
+| IR integration (BIM/1), sheet format, command bus, undo stack, scene model,
+  selection model, test harness for layout determinism.
+| Every mutation is a command; undo restores byte-identical canonical form; the
+  sheet round-trips.
+| 15
+| D1 — Rendering and interaction
+| SVG scene, hit-testing, ports, marquee, drag, keyboard model, focus model,
+  command palette.
+| Create, connect, move, delete and rewire 20 nodes with keyboard only; screen
+  reader announces every structural change.
+| 20
+| D2 — Layout and routing
+| Layered layout, bowtie constraint, incremental mode, orthogonal routing,
+  label placement, animation.
+| Layout of the sample assessment is deterministic and has zero overlaps; 1,000
+  nodes within budget.
+| 25
+| D3 — Notation and method packs
+| Pack format, bowtie pack, causal pack, fault-tree pack, palette, constraint
+  engine, problems pane.
+| A pack can be added without touching engine code; constraints surface as
+  named, jumpable problems.
+| 15
+| D4 — Containers, layers, styles
+| Groups (collapse/hoist), swimlanes/scenario bands, layers with visibility,
+  style tokens, symbols, fit-size.
+| Collapse/hoist works with keyboard; layer filter applies to export.
+| 12
+| D5 — Views and navigation
+| Table/grid view, outline view, minimap, bookmarks, jump-to (fuzzy), zoom to
+  region, model indicator.
+| Table view edits propagate to canvas; jump-to finds a node by partial name in
+  under 200 ms.
+| 12
+| D6 — Reports and export
+| AsciiDoc/HTML/PDF report templates, SVG/PNG/PDF export, DOT export, OPML,
+  document composer-lite (a declarative template, not a language).
+| One template renders a complete assessment with diagrams and tables; exports
+  are golden-filed.
+| 15
+| D7 — TOC method packs
+| CRT, FRT, Evaporating Cloud, Prerequisite Tree, Transition Tree, Goal Tree;
+  junctor operators; confidence propagation; driver/driven states; review
+  checklist.
+| A practitioner completes one tree of each kind; confidence propagation matches
+  the documented operator semantics on 20 fixture graphs.
+| 20
+| D8 — Diff, merge, revision compare
+| BIM diff, visual change view, three-way merge, conflict UX.
+| Merging two branches of the sample document produces a valid document and a
+  readable change list.
+| 15
+|===
+
+Total: about 149 person-days for the core, before import/export adapters (see
+the pipeline proposal) and before localisation of the editor chrome.
+
+== Part 6 — Sequencing
+
+[cols="1,6",options="header"]
+|===
+| Order | Sequence
+
+| 1
+| D0 → D1 → D2. Nothing ships before usable layout and keyboard editing.
+| 2
+| D3 in parallel with D2 once the scene is stable; the bowtie pack is the first
+  customer of every engine feature.
+| 3
+| D4 and D5 after D2; both depend on stable geometry.
+| 4
+| D6 after D5; reports consume views.
+| 5
+| D7 after D3 and D2; the TOC trees exercise the layout engine harder than the
+  bowtie does.
+| 6
+| D8 last; merge is only meaningful once the document shape is settled.
+|===
+
+== Part 7 — Evaluation
+
+Ship criteria are behavioural, not feature-count:
+
+. A facilitator can build a five-threat, three-consequence bowtie with two
+  controls, on a laptop, using only the keyboard, in under ten minutes.
+. A practitioner can lay out a 40-node TOC tree and get a readable diagram
+  without manual positioning.
+. Every diagram has a table equivalent that a screen-reader user can edit.
+. Layout is deterministic; the same document opens identically on two machines.
+. A 1,000-node imported register is navigable and searchable within the
+  performance budgets.
+. Export to SVG, PDF, DOT and AsciiDoc from one command path, with no visual
+  surprises.
+
+== Part 8 — Risks
+
+[cols="2,1,4",options="header"]
+|===
+| Risk | Severity | Mitigation
+
+| Editor scope swallows the product
+| High
+| The reject list is a contract. New notation requests must displace something.
+| Layout engine becomes a research project
+| High
+| Use a proven layered algorithm; measure crossings and stability in CI; timebox
+  the bowtie specialisation.
+| Accessibility regresses under canvas pressure
+| High
+| The table view is a first-class deliverable, not a fallback; axe and manual
+  keyboard tests gate every phase.
+| TOC method semantics are subtly wrong
+| Medium
+| Fixture graphs from the published documentation; practitioner review; label
+  operator semantics explicitly in the UI.
+| Merge produces plausible but wrong models
+| Medium
+| Never auto-resolve semantic conflicts; require acceptance; keep both sides in
+  the diff.
+| Performance collapse on large imports
+| Medium
+| Budgets in CI with synthetic corpora; canvas fallback; incremental layout.
+|===
+
+== Part 9 — Decisions requested
+
+[cols="1,4",options="header"]
+|===
+| # | Decision
+
+| G1 | Adopt model/view separation (VP-01) as an architectural invariant.
+| G2 | Adopt the phased plan D0–D8 and the sequence in Part 6.
+| G3 | Adopt SVG as the primary renderer with canvas fallback above a stated
+  threshold.
+| G4 | Adopt method packs (not hard-coded notations) as the extension mechanism.
+| G5 | Defer collaboration to local-first diff and merge; no server in this plan.
+| G6 | Accept the reject list, in particular 100+ notations, code round-trip and
+  AI-generated risk claims.
+| G7 | Treat the table/outline view as a ship criterion, not a nice-to-have.
+|===
